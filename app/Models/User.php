@@ -58,7 +58,7 @@ class User extends Authenticatable
             ->map(fn (string $name) => Str::of($name)->substr(0, 1))
             ->implode('');
     }
-    
+
     /**
      * Get the role that belongs to the user
      */
@@ -66,7 +66,7 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Role::class);
     }
-    
+
     /**
      * Check if user has superadmin role
      */
@@ -74,7 +74,7 @@ class User extends Authenticatable
     {
         return $this->role->name === 'superadmin';
     }
-    
+
     /**
      * Check if user has admin role
      */
@@ -82,7 +82,7 @@ class User extends Authenticatable
     {
         return $this->role->name === 'admin';
     }
-    
+
     /**
      * Check if user has manager role
      */

@@ -6,15 +6,15 @@ use App\Models\User;
 use App\Models\Role;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\Attributes\Layout;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
-#[Layout('components.layouts.app')]
-class UserManager extends Component
+class Dashboard extends Component
 {
     use WithPagination;
 
+    public $activeTab = 'overview';
     public $name;
     public $email;
     public $password;
@@ -28,22 +28,39 @@ class UserManager extends Component
         'role_id' => 'required|exists:roles,id',
     ];
 
-    public function mount()
+    public function setActiveTab($tab)
     {
-        // Check if user has permission
-        if (!auth()->user() || (!auth()->user()->isAdmin() && !auth()->user()->isSuperadmin())) {
-            abort(403, 'Unauthorized action.');
-        }
-
-        $this->role_id = 4; // Default role: normal user
+        $this->activeTab = $tab;
+        $this->resetPage();
     }
 
     public function render()
     {
+        // Get the currently authenticated user with role relationship
+        $currentUser = Auth::user();
+        
+        // Get total count of users and roles
+        $totalUsers = User::count();
+        $totalRoles = Role::count();
+        
+        // Get counts of users by role
+        $usersByRole = Role::withCount('users')->get();
+        
+        // Get the latest 5 users for the overview tab
+        $recentUsers = User::latest()->with('role')->take(5)->get();
+        
+        // For the users tab, get paginated users
+        $users = $this->activeTab === 'users' ? User::with('role')->paginate(10) : null;
+        
+        // Get all roles for the user form
         $roles = Role::all();
-        $users = User::with('role')->paginate(10);
-
-        return view('livewire.user-manager', [
+        
+        return view('livewire.dashboard', [
+            'currentUser' => $currentUser,
+            'totalUsers' => $totalUsers,
+            'totalRoles' => $totalRoles,
+            'usersByRole' => $usersByRole,
+            'recentUsers' => $recentUsers,
             'users' => $users,
             'roles' => $roles,
         ]);
@@ -51,8 +68,9 @@ class UserManager extends Component
 
     public function save()
     {
-        // Check permissions
-        if (!auth()->user()->isAdmin() && !auth()->user()->isSuperadmin()) {
+        // Check permissions - manually checking role names for safety
+        $currentUser = Auth::user();
+        if (!$currentUser || !$currentUser->role || ($currentUser->role->name !== 'admin' && $currentUser->role->name !== 'superadmin')) {
             abort(403);
         }
 
@@ -123,15 +141,16 @@ class UserManager extends Component
 
     public function delete()
     {
-        // Only superadmin can delete users
-        if (!auth()->user()->isSuperadmin()) {
+        // Only superadmin can delete users - manually checking role name for safety
+        $currentUser = Auth::user();
+        if (!$currentUser || !$currentUser->role || $currentUser->role->name !== 'superadmin') {
             abort(403);
         }
 
         $user = User::findOrFail($this->confirmingDelete);
 
         // Prevent deleting yourself
-        if ($user->id === auth()->id()) {
+        if ($user->id === Auth::id()) {
             session()->flash('error', 'You cannot delete your own account.');
             $this->confirmingDelete = null;
             return;

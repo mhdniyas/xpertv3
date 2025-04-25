@@ -42,7 +42,7 @@ class Login extends Component
 
         RateLimiter::clear($this->throttleKey());
         Session::regenerate();
-        
+
         // Implement role-based redirection
         $user = Auth::user();
         if ($user->isSuperadmin()) {
