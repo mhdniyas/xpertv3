@@ -38,23 +38,40 @@ class Dashboard extends Component
     {
         // Get the currently authenticated user with role relationship
         $currentUser = Auth::user();
+
+        // Only show statistics to superadmins
+        $totalUsers = $currentUser->isSuperadmin() ? User::count() : 0;
+        $totalRoles = $currentUser->isSuperadmin() ? Role::count() : 0;
+        $usersByRole = $currentUser->isSuperadmin() ? Role::withCount('users')->get() : collect();
         
-        // Get total count of users and roles
-        $totalUsers = User::count();
-        $totalRoles = Role::count();
+        // Filter users based on role permissions
+        if ($this->activeTab === 'users') {
+            if ($currentUser->isSuperadmin()) {
+                // Superadmin sees all users
+                $users = User::with('role')->paginate(10);
+            } else if ($currentUser->isAdmin()) {
+                // Admin users only see users they created
+                $users = User::with('role')
+                    ->where('created_by', $currentUser->id)
+                    ->paginate(10);
+            } else {
+                // Other roles don't see users
+                $users = collect();
+            }
+        } else {
+            $users = null;
+        }
         
-        // Get counts of users by role
-        $usersByRole = Role::withCount('users')->get();
-        
-        // Get the latest 5 users for the overview tab
-        $recentUsers = User::latest()->with('role')->take(5)->get();
-        
-        // For the users tab, get paginated users
-        $users = $this->activeTab === 'users' ? User::with('role')->paginate(10) : null;
-        
-        // Get all roles for the user form
-        $roles = Role::all();
-        
+        // Get the latest 5 users for the overview tab - only for superadmins
+        $recentUsers = $currentUser->isSuperadmin() 
+            ? User::latest()->with('role')->take(5)->get() 
+            : ($currentUser->isAdmin() 
+                ? User::latest()->with('role')->where('created_by', $currentUser->id)->take(5)->get()
+                : collect());
+
+        // Get filtered roles based on user's permissions
+        $roles = $this->getAvailableRoles();
+
         return view('livewire.dashboard', [
             'currentUser' => $currentUser,
             'totalUsers' => $totalUsers,
@@ -68,17 +85,35 @@ class Dashboard extends Component
 
     public function save()
     {
-        // Check permissions - manually checking role names for safety
         $currentUser = Auth::user();
-        if (!$currentUser || !$currentUser->role || ($currentUser->role->name !== 'admin' && $currentUser->role->name !== 'superadmin')) {
-            abort(403);
+        
+        // Check basic permissions
+        if (!$currentUser->isAdmin() && !$currentUser->isSuperadmin()) {
+            abort(403, 'Unauthorized action.');
         }
 
         $this->validate();
+        
+        // Get the role being assigned
+        $assignedRole = Role::find($this->role_id);
+        if (!$assignedRole) {
+            session()->flash('error', 'Invalid role selected.');
+            return;
+        }
+
+        // Check if the current user has permission to assign this role
+        if ($currentUser->isAdmin() && in_array($assignedRole->name, ['superadmin', 'admin'])) {
+            abort(403, 'You do not have permission to assign this role.');
+        }
 
         if ($this->editingUserId) {
             // Update existing user
-            $user = User::findOrFail($this->editingUserId);
+            $user = User::with('role')->findOrFail($this->editingUserId);
+            
+            // Check if admin is trying to edit a superadmin or another admin
+            if ($currentUser->isAdmin() && ($user->isSuperadmin() || $user->isAdmin())) {
+                abort(403, 'You do not have permission to edit this user.');
+            }
 
             // Add unique email validation except for current user
             $this->validate([
@@ -116,6 +151,7 @@ class Dashboard extends Component
                 'email' => $this->email,
                 'password' => Hash::make($this->password),
                 'role_id' => $this->role_id,
+                'created_by' => $currentUser->id, // Track who created this user
             ]);
 
             session()->flash('message', 'User successfully created.');
@@ -141,23 +177,34 @@ class Dashboard extends Component
 
     public function delete()
     {
-        // Only superadmin can delete users - manually checking role name for safety
         $currentUser = Auth::user();
-        if (!$currentUser || !$currentUser->role || $currentUser->role->name !== 'superadmin') {
-            abort(403);
-        }
-
-        $user = User::findOrFail($this->confirmingDelete);
-
+        $userToDelete = User::with('role')->findOrFail($this->confirmingDelete);
+        
         // Prevent deleting yourself
-        if ($user->id === Auth::id()) {
+        if ($userToDelete->id === $currentUser->id) {
             session()->flash('error', 'You cannot delete your own account.');
             $this->confirmingDelete = null;
             return;
         }
 
-        $user->delete();
-        session()->flash('message', 'User deleted successfully.');
+        // Permission checks based on role hierarchy
+        if ($currentUser->isSuperadmin()) {
+            // Superadmin can delete anyone
+            $userToDelete->delete();
+            session()->flash('message', 'User deleted successfully.');
+        } else if ($currentUser->isAdmin()) {
+            // Admins can delete only managers and normal users
+            if ($userToDelete->isSuperadmin() || $userToDelete->isAdmin()) {
+                abort(403, 'You do not have permission to delete this user.');
+            }
+            
+            $userToDelete->delete();
+            session()->flash('message', 'User deleted successfully.');
+        } else {
+            // No other role can delete users
+            abort(403, 'You do not have permission to delete users.');
+        }
+        
         $this->confirmingDelete = null;
     }
 
@@ -175,5 +222,26 @@ class Dashboard extends Component
     public function cancel()
     {
         $this->resetFields();
+    }
+
+    /**
+     * Get roles available for assignment based on current user's role
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    protected function getAvailableRoles()
+    {
+        $currentUser = Auth::user();
+
+        if ($currentUser->isSuperadmin()) {
+            // Superadmins can assign any role
+            return Role::all();
+        } else if ($currentUser->isAdmin()) {
+            // Admins can only assign manager and normal user roles
+            return Role::whereIn('name', ['manager', 'normal user'])->get();
+        } else {
+            // Default case - only normal user role
+            return Role::where('name', 'normal user')->get();
+        }
     }
 }

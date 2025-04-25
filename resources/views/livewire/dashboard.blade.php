@@ -58,7 +58,7 @@
         <!-- Dashboard Navigation Tabs -->
         <div class="mb-6 border-b border-gray-200">
             <nav class="-mb-px flex space-x-6" aria-label="Tabs">
-                <button 
+                <button
                     wire:click="setActiveTab('overview')"
                     class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center {{ $activeTab === 'overview' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}"
                 >
@@ -69,7 +69,7 @@
                 </button>
 
                 @if($currentUser->isAdmin() || $currentUser->isSuperadmin())
-                <button 
+                <button
                     wire:click="setActiveTab('users')"
                     class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center {{ $activeTab === 'users' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}"
                 >
@@ -125,6 +125,7 @@
                 </div>
 
                 <!-- Dashboard Stats -->
+                @if($currentUser->isSuperadmin())
                 <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg mb-6">
                     <h2 class="text-lg font-medium text-gray-900">Statistics</h2>
                     <p class="mt-1 text-sm text-gray-600">System overview and statistics.</p>
@@ -146,6 +147,7 @@
                         </div>
                     </div>
                 </div>
+                @endif
 
                 @if($currentUser->isAdmin() || $currentUser->isSuperadmin())
                 <!-- Recent Users -->
@@ -155,8 +157,8 @@
                             <h2 class="text-lg font-medium text-gray-900">Recent Users</h2>
                             <p class="mt-1 text-sm text-gray-600">Recently registered users in the system.</p>
                         </div>
-                        <button 
-                            wire:click="setActiveTab('users')" 
+                        <button
+                            wire:click="setActiveTab('users')"
                             class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150"
                         >
                             View All Users

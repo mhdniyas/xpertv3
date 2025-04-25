@@ -40,8 +40,22 @@ class UserManager extends Component
 
     public function render()
     {
-        $roles = Role::all();
-        $users = User::with('role')->paginate(10);
+        $currentUser = auth()->user();
+        $roles = $this->getAvailableRoles();
+        
+        // Filter users based on role permissions
+        if ($currentUser->isSuperadmin()) {
+            // Superadmin sees all users
+            $users = User::with('role')->paginate(10);
+        } else if ($currentUser->isAdmin()) {
+            // Admin users only see users they created
+            $users = User::with('role')
+                ->where('created_by', $currentUser->id)
+                ->paginate(10);
+        } else {
+            // Other roles don't see users
+            $users = collect();
+        }
 
         return view('livewire.user-manager', [
             'users' => $users,
@@ -49,18 +63,58 @@ class UserManager extends Component
         ]);
     }
 
+    /**
+     * Get roles available for assignment based on current user's role
+     * 
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    protected function getAvailableRoles()
+    {
+        $currentUser = auth()->user();
+        
+        if ($currentUser->isSuperadmin()) {
+            // Superadmins can assign any role
+            return Role::all();
+        } else if ($currentUser->isAdmin()) {
+            // Admins can only assign manager and normal user roles
+            return Role::whereIn('name', ['manager', 'normal user'])->get();
+        } else {
+            // Default case - only normal user role
+            return Role::where('name', 'normal user')->get();
+        }
+    }
+
     public function save()
     {
-        // Check permissions
-        if (!auth()->user()->isAdmin() && !auth()->user()->isSuperadmin()) {
-            abort(403);
+        $currentUser = auth()->user();
+        
+        // Check basic permissions
+        if (!$currentUser->isAdmin() && !$currentUser->isSuperadmin()) {
+            abort(403, 'Unauthorized action.');
         }
 
         $this->validate();
+        
+        // Get the role being assigned
+        $assignedRole = Role::find($this->role_id);
+        if (!$assignedRole) {
+            session()->flash('error', 'Invalid role selected.');
+            return;
+        }
+
+        // Check if the current user has permission to assign this role
+        if ($currentUser->isAdmin() && in_array($assignedRole->name, ['superadmin', 'admin'])) {
+            abort(403, 'You do not have permission to assign this role.');
+        }
 
         if ($this->editingUserId) {
             // Update existing user
-            $user = User::findOrFail($this->editingUserId);
+            $user = User::with('role')->findOrFail($this->editingUserId);
+            
+            // Check if admin is trying to edit a superadmin or another admin
+            if ($currentUser->isAdmin() && ($user->isSuperadmin() || $user->isAdmin())) {
+                abort(403, 'You do not have permission to edit this user.');
+            }
 
             // Add unique email validation except for current user
             $this->validate([
@@ -84,7 +138,6 @@ class UserManager extends Component
             }
 
             $user->update($userData);
-
             session()->flash('message', 'User successfully updated.');
         } else {
             // Create new user
@@ -98,6 +151,7 @@ class UserManager extends Component
                 'email' => $this->email,
                 'password' => Hash::make($this->password),
                 'role_id' => $this->role_id,
+                'created_by' => $currentUser->id, // Track who created this user
             ]);
 
             session()->flash('message', 'User successfully created.');
@@ -123,22 +177,34 @@ class UserManager extends Component
 
     public function delete()
     {
-        // Only superadmin can delete users
-        if (!auth()->user()->isSuperadmin()) {
-            abort(403);
-        }
-
-        $user = User::findOrFail($this->confirmingDelete);
-
+        $currentUser = auth()->user();
+        $userToDelete = User::with('role')->findOrFail($this->confirmingDelete);
+        
         // Prevent deleting yourself
-        if ($user->id === auth()->id()) {
+        if ($userToDelete->id === $currentUser->id) {
             session()->flash('error', 'You cannot delete your own account.');
             $this->confirmingDelete = null;
             return;
         }
 
-        $user->delete();
-        session()->flash('message', 'User deleted successfully.');
+        // Permission checks based on role hierarchy
+        if ($currentUser->isSuperadmin()) {
+            // Superadmin can delete anyone
+            $userToDelete->delete();
+            session()->flash('message', 'User deleted successfully.');
+        } else if ($currentUser->isAdmin()) {
+            // Admins can delete only managers and normal users
+            if ($userToDelete->isSuperadmin() || $userToDelete->isAdmin()) {
+                abort(403, 'You do not have permission to delete this user.');
+            }
+            
+            $userToDelete->delete();
+            session()->flash('message', 'User deleted successfully.');
+        } else {
+            // No other role can delete users
+            abort(403, 'You do not have permission to delete users.');
+        }
+        
         $this->confirmingDelete = null;
     }
 
