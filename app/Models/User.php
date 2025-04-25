@@ -22,6 +22,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role_id',
     ];
 
     /**
@@ -56,5 +57,37 @@ class User extends Authenticatable
             ->explode(' ')
             ->map(fn (string $name) => Str::of($name)->substr(0, 1))
             ->implode('');
+    }
+    
+    /**
+     * Get the role that belongs to the user
+     */
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+    
+    /**
+     * Check if user has superadmin role
+     */
+    public function isSuperadmin()
+    {
+        return $this->role->name === 'superadmin';
+    }
+    
+    /**
+     * Check if user has admin role
+     */
+    public function isAdmin()
+    {
+        return $this->role->name === 'admin';
+    }
+    
+    /**
+     * Check if user has manager role
+     */
+    public function isManager()
+    {
+        return $this->role->name === 'manager';
     }
 }

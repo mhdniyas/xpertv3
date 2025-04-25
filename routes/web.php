@@ -1,24 +1,43 @@
 <?php
 
-use App\Livewire\Settings\Appearance;
-use App\Livewire\Settings\Password;
-use App\Livewire\Settings\Profile;
 use Illuminate\Support\Facades\Route;
+use App\Livewire\UserManager;
 
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
+Route::view('/', 'welcome');
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
-Route::middleware(['auth'])->group(function () {
-    Route::redirect('settings', 'settings/profile');
+Route::view('profile', 'profile')
+    ->middleware(['auth'])
+    ->name('profile');
 
-    Route::get('settings/profile', Profile::class)->name('settings.profile');
-    Route::get('settings/password', Password::class)->name('settings.password');
-    Route::get('settings/appearance', Appearance::class)->name('settings.appearance');
+// Role-based dashboard routes
+Route::middleware(['auth'])->group(function () {
+    // Superadmin routes
+    Route::view('superadmin/dashboard', 'admin.superadmin-dashboard')
+        ->middleware('can:isSuperadmin')
+        ->name('superadmin.dashboard');
+    
+    // Admin routes
+    Route::view('admin/dashboard', 'admin.admin-dashboard')
+        ->middleware('can:isAdmin')
+        ->name('admin.dashboard');
+    
+    // Manager routes
+    Route::view('manager/dashboard', 'admin.manager-dashboard')
+        ->middleware('can:isManager')
+        ->name('manager.dashboard');
+    
+    // Normal user routes
+    Route::view('user/dashboard', 'user-dashboard')
+        ->name('user.dashboard');
+    
+    // User Management
+    Route::get('admin/users', UserManager::class)
+        ->middleware('can:isAdmin')
+        ->name('admin.users');
 });
 
 require __DIR__.'/auth.php';

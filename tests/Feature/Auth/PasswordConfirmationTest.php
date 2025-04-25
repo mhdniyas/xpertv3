@@ -2,10 +2,9 @@
 
 namespace Tests\Feature\Auth;
 
-use App\Livewire\Auth\ConfirmPassword;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Livewire;
+use Livewire\Volt\Volt;
 use Tests\TestCase;
 
 class PasswordConfirmationTest extends TestCase
@@ -18,7 +17,9 @@ class PasswordConfirmationTest extends TestCase
 
         $response = $this->actingAs($user)->get('/confirm-password');
 
-        $response->assertStatus(200);
+        $response
+            ->assertSeeVolt('pages.auth.confirm-password')
+            ->assertStatus(200);
     }
 
     public function test_password_can_be_confirmed(): void
@@ -27,13 +28,14 @@ class PasswordConfirmationTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = Livewire::test(ConfirmPassword::class)
-            ->set('password', 'password')
-            ->call('confirmPassword');
+        $component = Volt::test('pages.auth.confirm-password')
+            ->set('password', 'password');
 
-        $response
-            ->assertHasNoErrors()
-            ->assertRedirect(route('dashboard', absolute: false));
+        $component->call('confirmPassword');
+
+        $component
+            ->assertRedirect('/dashboard')
+            ->assertHasNoErrors();
     }
 
     public function test_password_is_not_confirmed_with_invalid_password(): void
@@ -42,10 +44,13 @@ class PasswordConfirmationTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = Livewire::test(ConfirmPassword::class)
-            ->set('password', 'wrong-password')
-            ->call('confirmPassword');
+        $component = Volt::test('pages.auth.confirm-password')
+            ->set('password', 'wrong-password');
 
-        $response->assertHasErrors(['password']);
+        $component->call('confirmPassword');
+
+        $component
+            ->assertNoRedirect()
+            ->assertHasErrors('password');
     }
 }
