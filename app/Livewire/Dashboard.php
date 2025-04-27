@@ -9,6 +9,7 @@ use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Storage;
 
 class Dashboard extends Component
 {
@@ -21,6 +22,10 @@ class Dashboard extends Component
     public $role_id;
     public $editingUserId = null;
     public $confirmingDelete = null;
+    public $showHeaderNav = false; // Ensures navigation is removed
+    public $showSignoutConfirm = false; // Property to control sign-out confirmation dialog
+    public $photo;
+    public $removePhoto = false; // Flag to remove the current photo
 
     protected $rules = [
         'name' => 'required|string|min:3|max:255',
@@ -30,8 +35,12 @@ class Dashboard extends Component
 
     public function setActiveTab($tab)
     {
-        $this->activeTab = $tab;
-        $this->resetPage();
+        if ($tab === 'signout') {
+            $this->showSignoutConfirm = true;
+        } else {
+            $this->activeTab = $tab;
+            $this->resetPage();
+        }
     }
 
     public function render()
@@ -43,7 +52,7 @@ class Dashboard extends Component
         $totalUsers = $currentUser->isSuperadmin() ? User::count() : 0;
         $totalRoles = $currentUser->isSuperadmin() ? Role::count() : 0;
         $usersByRole = $currentUser->isSuperadmin() ? Role::withCount('users')->get() : collect();
-        
+
         // Filter users based on role permissions
         if ($this->activeTab === 'users') {
             if ($currentUser->isSuperadmin()) {
@@ -61,16 +70,44 @@ class Dashboard extends Component
         } else {
             $users = null;
         }
-        
+
         // Get the latest 5 users for the overview tab - only for superadmins
-        $recentUsers = $currentUser->isSuperadmin() 
-            ? User::latest()->with('role')->take(5)->get() 
-            : ($currentUser->isAdmin() 
+        $recentUsers = $currentUser->isSuperadmin()
+            ? User::latest()->with('role')->take(5)->get()
+            : ($currentUser->isAdmin()
                 ? User::latest()->with('role')->where('created_by', $currentUser->id)->take(5)->get()
                 : collect());
 
         // Get filtered roles based on user's permissions
         $roles = $this->getAvailableRoles();
+
+        // Build navigation tabs including sign-out
+        $tabs = [
+            'overview' => [
+                'name' => 'Overview',
+                'icon' => 'home'
+            ]
+        ];
+
+        // Add user management for admins and superadmins
+        if ($currentUser->isAdmin() || $currentUser->isSuperadmin()) {
+            $tabs['users'] = [
+                'name' => 'Users',
+                'icon' => 'users'
+            ];
+        }
+
+        // Add settings tab
+        $tabs['settings'] = [
+            'name' => 'Settings',
+            'icon' => 'cog'
+        ];
+
+        // Add sign-out tab for all users
+        $tabs['signout'] = [
+            'name' => 'Sign Out',
+            'icon' => 'logout'
+        ];
 
         return view('livewire.dashboard', [
             'currentUser' => $currentUser,
@@ -80,20 +117,29 @@ class Dashboard extends Component
             'recentUsers' => $recentUsers,
             'users' => $users,
             'roles' => $roles,
+            'showHeaderNav' => $this->showHeaderNav,
+            'tabs' => $tabs,
         ]);
     }
 
     public function save()
     {
         $currentUser = Auth::user();
-        
+
         // Check basic permissions
         if (!$currentUser->isAdmin() && !$currentUser->isSuperadmin()) {
             abort(403, 'Unauthorized action.');
         }
 
         $this->validate();
-        
+
+        // Add photo validation if provided
+        if ($this->photo) {
+            $this->validate([
+                'photo' => 'image|max:1024', // 1MB Max
+            ]);
+        }
+
         // Get the role being assigned
         $assignedRole = Role::find($this->role_id);
         if (!$assignedRole) {
@@ -109,7 +155,7 @@ class Dashboard extends Component
         if ($this->editingUserId) {
             // Update existing user
             $user = User::with('role')->findOrFail($this->editingUserId);
-            
+
             // Check if admin is trying to edit a superadmin or another admin
             if ($currentUser->isAdmin() && ($user->isSuperadmin() || $user->isAdmin())) {
                 abort(403, 'You do not have permission to edit this user.');
@@ -136,8 +182,24 @@ class Dashboard extends Component
                 $userData['password'] = Hash::make($this->password);
             }
 
-            $user->update($userData);
+            // Handle photo if provided
+            if ($this->photo) {
+                // Delete old photo if exists
+                if ($user->photo && Storage::disk('public')->exists($user->photo)) {
+                    Storage::disk('public')->delete($user->photo);
+                }
+                // Store new photo
+                $path = $this->photo->store('photos', 'public');
+                $userData['photo'] = $path;
+            } elseif ($this->removePhoto) {
+                // Remove photo if requested
+                if ($user->photo && Storage::disk('public')->exists($user->photo)) {
+                    Storage::disk('public')->delete($user->photo);
+                }
+                $userData['photo'] = null;
+            }
 
+            $user->update($userData);
             session()->flash('message', 'User successfully updated.');
         } else {
             // Create new user
@@ -146,13 +208,16 @@ class Dashboard extends Component
                 'email' => 'required|email|unique:users,email',
             ]);
 
-            User::create([
+            $userData = [
                 'name' => $this->name,
                 'email' => $this->email,
                 'password' => Hash::make($this->password),
                 'role_id' => $this->role_id,
                 'created_by' => $currentUser->id, // Track who created this user
-            ]);
+                'photo' => $this->photo ? $this->photo->store('photos', 'public') : null,
+            ];
+
+            User::create($userData);
 
             session()->flash('message', 'User successfully created.');
         }
@@ -168,6 +233,9 @@ class Dashboard extends Component
         $this->email = $user->email;
         $this->password = ''; // Don't fill password for security
         $this->role_id = $user->role_id;
+        $this->photo = null;
+        $this->removePhoto = false;
+        $this->oldPhoto = $user->photo; // Store the current photo path
     }
 
     public function confirmDelete($id)
@@ -175,11 +243,16 @@ class Dashboard extends Component
         $this->confirmingDelete = $id;
     }
 
+    public function cancelDelete()
+    {
+        $this->confirmingDelete = null;
+    }
+
     public function delete()
     {
         $currentUser = Auth::user();
         $userToDelete = User::with('role')->findOrFail($this->confirmingDelete);
-        
+
         // Prevent deleting yourself
         if ($userToDelete->id === $currentUser->id) {
             session()->flash('error', 'You cannot delete your own account.');
@@ -197,25 +270,19 @@ class Dashboard extends Component
             if ($userToDelete->isSuperadmin() || $userToDelete->isAdmin()) {
                 abort(403, 'You do not have permission to delete this user.');
             }
-            
             $userToDelete->delete();
             session()->flash('message', 'User deleted successfully.');
         } else {
             // No other role can delete users
             abort(403, 'You do not have permission to delete users.');
         }
-        
-        $this->confirmingDelete = null;
-    }
 
-    public function cancelDelete()
-    {
         $this->confirmingDelete = null;
     }
 
     public function resetFields()
     {
-        $this->reset(['name', 'email', 'password', 'editingUserId']);
+        $this->reset(['name', 'email', 'password', 'editingUserId', 'photo', 'removePhoto']);
         $this->role_id = 4; // Reset to default role
     }
 
@@ -243,5 +310,75 @@ class Dashboard extends Component
             // Default case - only normal user role
             return Role::where('name', 'normal user')->get();
         }
+    }
+
+    /**
+     * Perform sign-out action
+     */
+    public function signOut()
+    {
+        Auth::logout();
+        session()->invalidate();
+        session()->regenerateToken();
+        return redirect()->route('login');
+    }
+
+    /**
+     * Cancel sign-out confirmation
+     */
+    public function cancelSignout()
+    {
+        $this->showSignoutConfirm = false;
+    }
+
+    /**
+     * Save user photo
+     */
+    public function savePhoto()
+    {
+        $this->validate([
+            'photo' => 'required|image|max:1024', // 1MB Max
+        ]);
+
+        $currentUser = Auth::user();
+
+        // Delete old photo if exists
+        if ($currentUser->photo && Storage::disk('public')->exists($currentUser->photo)) {
+            Storage::disk('public')->delete($currentUser->photo);
+        }
+
+        // Store and save new photo path
+        $path = $this->photo->store('photos', 'public');
+        $currentUser->photo = $path;
+        $currentUser->save();
+
+        $this->photo = null; // Reset the upload field
+        session()->flash('message', 'Photo updated successfully');
+    }
+
+    /**
+     * Remove the user's photo
+     */
+    public function deletePhoto()
+    {
+        $currentUser = Auth::user();
+
+        if ($currentUser->photo && Storage::disk('public')->exists($currentUser->photo)) {
+            Storage::disk('public')->delete($currentUser->photo);
+        }
+
+        $currentUser->photo = null;
+        $currentUser->save();
+
+        session()->flash('message', 'Photo removed successfully');
+    }
+
+    /**
+     * Load user photo when editing
+     */
+    public function loadUserPhoto($userId)
+    {
+        $user = User::findOrFail($userId);
+        $this->oldPhoto = $user->photo;
     }
 }

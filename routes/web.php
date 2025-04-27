@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Livewire\UserManager;
+// Removed AdminDashboard import as it doesn't exist
 
 Route::view('/', 'welcome');
 
@@ -45,5 +46,7 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('can:isAdmin')
         ->name('admin.users');
 });
+
+// Removed duplicate AdminDashboard route
 
 require __DIR__.'/auth.php';
