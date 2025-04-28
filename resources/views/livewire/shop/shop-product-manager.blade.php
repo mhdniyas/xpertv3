@@ -223,7 +223,7 @@
                                             <input wire:model="image" type="file" id="image" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md">
                                         </div>
                                         @error('image') <span class="text-red-600 text-xs">{{ $message }}</span> @enderror
-                                    
+
                                         @if ($image)
                                             <div class="mt-2">
                                                 <img src="{{ $image->temporaryUrl() }}" class="h-24 w-24 object-cover rounded-md">

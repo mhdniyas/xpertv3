@@ -61,6 +61,14 @@ class Category extends Model
     }
 
     /**
+     * Get all shop categories associated with this category.
+     */
+    public function shopCategories()
+    {
+        return $this->hasMany(ShopCategory::class, 'category_id');
+    }
+
+    /**
      * Get all recursive children categories.
      */
     public function allChildren()

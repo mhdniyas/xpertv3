@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use App\Models\Category;
 
 class Shop extends Model
 {
@@ -66,13 +67,28 @@ class Shop extends Model
     {
         return $this->hasMany(ShopProduct::class);
     }
-    
+
     /**
      * Get all categories for this shop.
      */
     public function shopCategories()
     {
         return $this->hasMany(ShopCategory::class);
+    }
+
+    /**
+     * Get all categories associated with this shop through shop categories.
+     */
+    public function categories()
+    {
+        return $this->hasManyThrough(
+            Category::class,
+            ShopCategory::class,
+            'shop_id', // Foreign key on ShopCategory table
+            'id', // Foreign key on Category table (referenced by category_id on ShopCategory)
+            'id', // Local key on Shop table
+            'category_id' // Local key on ShopCategory table
+        );
     }
 
     /**

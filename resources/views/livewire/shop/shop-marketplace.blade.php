@@ -38,15 +38,15 @@
                     <div>
                         <label for="sortBy" class="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
                         <div class="flex items-center space-x-2">
-                            <button wire:click="sortBy('name')" class="px-3 py-2 rounded-md text-sm font-medium {{ $sortBy === 'name' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700' }} focus:outline-none">
-                                Name 
-                                @if($sortBy === 'name')
+                            <button wire:click="sortBy('name')" class="px-3 py-2 rounded-md text-sm font-medium {{ $sortField === 'name' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700' }} focus:outline-none">
+                                Name
+                                @if($sortField === 'name')
                                     <span class="ml-1">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
                                 @endif
                             </button>
-                            <button wire:click="sortBy('created_at')" class="px-3 py-2 rounded-md text-sm font-medium {{ $sortBy === 'created_at' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700' }} focus:outline-none">
+                            <button wire:click="sortBy('created_at')" class="px-3 py-2 rounded-md text-sm font-medium {{ $sortField === 'created_at' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-700' }} focus:outline-none">
                                 Newest
-                                @if($sortBy === 'created_at')
+                                @if($sortField === 'created_at')
                                     <span class="ml-1">{{ $sortDirection === 'asc' ? '↑' : '↓' }}</span>
                                 @endif
                             </button>
@@ -72,21 +72,21 @@
                         @endif
                         <div class="p-4">
                             <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ $shop->name }}</h3>
-                            
+
                             <div class="flex items-center mb-2">
-                                @if($shop->location)
+                                @if($shop->address)
                                     <svg class="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                     </svg>
-                                    <span class="ml-1 text-sm text-gray-600">{{ $shop->location }}</span>
+                                    <span class="ml-1 text-sm text-gray-600">{{ $shop->address }}</span>
                                 @endif
                             </div>
-                            
+
                             @if($shop->description)
                                 <p class="text-sm text-gray-600 line-clamp-2 mb-3">{{ $shop->description }}</p>
                             @endif
-                            
+
                             <div class="flex justify-between items-center">
                                 <span class="text-xs text-gray-500">{{ $shop->products()->where('status', 'active')->count() }} products</span>
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">

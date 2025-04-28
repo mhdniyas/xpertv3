@@ -2,9 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Livewire\UserManager;
-use App\Livewire\ShopMarketplace;
-use App\Livewire\ShopCategoryManager;
-use App\Livewire\ShopProductManager;
+use App\Livewire\Shop\ShopMarketplace;
+use App\Livewire\Shop\ShopCategoryManager;
+use App\Livewire\Shop\ShopProductManager;
+use App\Livewire\Shop\ShopManager;
 use App\Http\Controllers\ShopController;
 // Removed AdminDashboard import as it doesn't exist
 
@@ -58,11 +59,15 @@ Route::get('/shop/{shopSlug}/product/{productSlug}', [ShopController::class, 'sh
 
 // Shop Management Routes (Protected)
 Route::middleware(['auth'])->group(function () {
+    // Shop Management
+    Route::get('/shops', ShopManager::class)
+        ->name('shops.manage');
+
     // Shop Category Management
     Route::get('/shop/{shop}/categories', ShopCategoryManager::class)
         ->name('shop.categories')
         ->middleware('can:manageCategories,shop');
-    
+
     // Shop Product Management
     Route::get('/shop/{shop}/products', ShopProductManager::class)
         ->name('shop.products')

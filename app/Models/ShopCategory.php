@@ -14,6 +14,7 @@ class ShopCategory extends Model
         'parent_id',
         'status',
         'created_by',
+        'category_id',
     ];
 
     /**
@@ -39,6 +40,14 @@ class ShopCategory extends Model
     }
 
     /**
+     * Get the general category associated with this shop category.
+     */
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    /**
      * Get the parent category.
      */
     public function parent()
@@ -53,7 +62,7 @@ class ShopCategory extends Model
     {
         return $this->hasMany(ShopCategory::class, 'parent_id');
     }
-    
+
     /**
      * Get all recursive children categories.
      */
@@ -61,7 +70,7 @@ class ShopCategory extends Model
     {
         return $this->children()->with('allChildren');
     }
-    
+
     /**
      * Get the user who created this category.
      */
@@ -69,7 +78,7 @@ class ShopCategory extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
-    
+
     /**
      * Get products in this category.
      */
@@ -85,7 +94,7 @@ class ShopCategory extends Model
     {
         return $query->where('status', 'active');
     }
-    
+
     /**
      * Scope a query to only include parent categories (no parent).
      */
@@ -93,7 +102,7 @@ class ShopCategory extends Model
     {
         return $query->whereNull('parent_id');
     }
-    
+
     /**
      * Scope a query to only include categories of a specific shop.
      */

@@ -10,6 +10,7 @@ use App\Models\Shop;
 use App\Models\ShopProduct;
 use App\Models\ActivityLog;
 use App\Models\ShopCategory;
+use App\Livewire\Shop\ShopManager;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
@@ -37,10 +38,11 @@ class Dashboard extends Component
     
     // Shop detail properties
     public $selectedShopId = null;
-    public $shopDetailView = 'overview'; // overview, inventory, categories, sales
+    public $shopDetailView = 'overview'; // overview, inventory, categories, sales, manager
     public $productsByCategory = [];
     public $shopCategories = [];
     public $selectedCategoryId = null;
+    public $showShopManager = false;
 
     public $currentUser;
     public $totalUsers;
@@ -965,5 +967,27 @@ class Dashboard extends Component
             )
             ->orderBy('products.name')
             ->get();
+    }
+
+    /**
+     * Toggle shop manager view
+     */
+    public function toggleShopManager($shopId = null)
+    {
+        if ($shopId) {
+            $this->selectedShopId = $shopId;
+        }
+        
+        $this->shopDetailView = 'manager';
+        $this->showShopManager = true;
+    }
+    
+    /**
+     * Close shop manager view and return to overview
+     */
+    public function closeShopManager()
+    {
+        $this->showShopManager = false;
+        $this->shopDetailView = 'overview';
     }
 }
