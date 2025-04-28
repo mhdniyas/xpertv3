@@ -4,6 +4,10 @@ namespace App\Livewire;
 
 use App\Models\User;
 use App\Models\Role;
+use App\Models\Category;
+use App\Models\Product;
+use App\Models\Shop;
+use App\Models\ActivityLog;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
@@ -26,6 +30,8 @@ class Dashboard extends Component
     public $showSignoutConfirm = false; // Property to control sign-out confirmation dialog
     public $photo;
     public $removePhoto = false; // Flag to remove the current photo
+    public $oldPhoto;
+    public $searchTerm = '';
 
     protected $rules = [
         'name' => 'required|string|min:3|max:255',
@@ -48,40 +54,141 @@ class Dashboard extends Component
         // Get the currently authenticated user with role relationship
         $currentUser = Auth::user();
 
-        // Only show statistics to superadmins
-        $totalUsers = $currentUser->isSuperadmin() ? User::count() : 0;
-        $totalRoles = $currentUser->isSuperadmin() ? Role::count() : 0;
-        $usersByRole = $currentUser->isSuperadmin() ? Role::withCount('users')->get() : collect();
+        // Initialize collections
+        $userActivity = collect();
+        $users = collect();
+        $recentUsers = collect();
+        $totalUsers = 0;
+        $totalRoles = 0;
+        $usersByRole = collect();
+        $myTasks = collect();
+        $myReports = collect();
 
-        // Filter users based on role permissions
-        if ($this->activeTab === 'users') {
-            if ($currentUser->isSuperadmin()) {
-                // Superadmin sees all users
-                $users = User::with('role')->paginate(10);
-            } else if ($currentUser->isAdmin()) {
-                // Admin users only see users they created
-                $users = User::with('role')
-                    ->where('created_by', $currentUser->id)
-                    ->paginate(10);
-            } else {
-                // Other roles don't see users
-                $users = collect();
-            }
-        } else {
-            $users = null;
+        // Initialize admin dashboard stats
+        $totalCategories = 0;
+        $totalProducts = 0;
+        $pendingShops = 0;
+        $productSuggestions = 0;
+
+        // Build user-specific data based on the active tab
+        switch ($this->activeTab) {
+            case 'overview':
+                // Load different overview data based on user role
+                if ($currentUser->isSuperadmin()) {
+                    $totalUsers = User::count();
+                    $totalRoles = Role::count();
+                    $usersByRole = Role::withCount('users')->get();
+                    $recentUsers = User::latest()->with('role')->take(5)->get();
+
+                    // Admin dashboard stats
+                    $totalCategories = Category::count();
+                    $totalProducts = Product::where('is_global', true)->count();
+                    $pendingShops = Shop::where('status', 'pending')->count();
+                    $productSuggestions = Product::where('global_suggestion', true)->count();
+                } elseif ($currentUser->isAdmin()) {
+                    // Admin only sees users they created
+                    $totalUsers = User::where('created_by', $currentUser->id)->count();
+                    $usersByRole = Role::whereIn('name', ['manager', 'normal user'])
+                        ->withCount(['users' => function($query) use ($currentUser) {
+                            $query->where('created_by', $currentUser->id);
+                        }])
+                        ->get();
+                    $recentUsers = User::latest()
+                        ->with('role')
+                        ->where('created_by', $currentUser->id)
+                        ->take(5)
+                        ->get();
+
+                    // Admin dashboard stats
+                    $totalCategories = Category::count();
+                    $totalProducts = Product::where('is_global', true)->count();
+                    $pendingShops = Shop::where('status', 'pending')->count();
+                    $productSuggestions = Product::where('global_suggestion', true)->count();
+                } elseif ($currentUser->isManager()) {
+                    // Manager sees only relevant information
+                    $userActivity = User::where('role_id', 4) // normal users
+                        ->latest()
+                        ->take(5)
+                        ->get();
+                } else {
+                    // Regular user just sees their own data
+                    $userActivity = collect([$currentUser]);
+                }
+                break;
+
+            case 'users':
+                // Show users based on permissions
+                if ($currentUser->isSuperadmin()) {
+                    // Superadmin sees all users with search
+                    $users = User::with('role')
+                        ->when($this->searchTerm, function($query) {
+                            $query->where('name', 'like', '%' . $this->searchTerm . '%')
+                                ->orWhere('email', 'like', '%' . $this->searchTerm . '%');
+                        })
+                        ->paginate(10);
+                } elseif ($currentUser->isAdmin()) {
+                    // Admin only sees users they created with search
+                    $users = User::with('role')
+                        ->where('created_by', $currentUser->id)
+                        ->when($this->searchTerm, function($query) {
+                            $query->where(function($q) {
+                                $q->where('name', 'like', '%' . $this->searchTerm . '%')
+                                  ->orWhere('email', 'like', '%' . $this->searchTerm . '%');
+                            });
+                        })
+                        ->paginate(10);
+                } else {
+                    // Other roles don't see users tab
+                    $users = collect();
+                }
+                break;
+
+            case 'my_tasks':
+                // This would connect to a tasks model if you had one
+                // For now just demonstrate tab functionality
+                $myTasks = collect([
+                    ['id' => 1, 'title' => 'Sample Task 1', 'status' => 'In Progress'],
+                    ['id' => 2, 'title' => 'Sample Task 2', 'status' => 'Completed'],
+                ]);
+                break;
+
+            case 'my_reports':
+                // This would connect to a reports model if you had one
+                $myReports = collect([
+                    ['id' => 1, 'title' => 'Monthly Report', 'date' => now()->format('Y-m-d')],
+                    ['id' => 2, 'title' => 'Weekly Summary', 'date' => now()->subDays(7)->format('Y-m-d')]
+                ]);
+                break;
+
+            case 'settings':
+                // Settings data is handled in the view
+                break;
+
+            case 'categories':
+                // Categories management tab is handled by the Livewire component
+                break;
+
+            case 'products':
+                // Products management tab is handled by the Livewire component
+                break;
+
+            case 'shops':
+                // Shop approvals tab is handled by the Livewire component
+                break;
+
+            case 'product_suggestions':
+                // Product suggestions tab is handled by the Livewire component
+                break;
+
+            case 'activity_logs':
+                // Activity logs tab is handled by the Livewire component (superadmin only)
+                break;
         }
-
-        // Get the latest 5 users for the overview tab - only for superadmins
-        $recentUsers = $currentUser->isSuperadmin()
-            ? User::latest()->with('role')->take(5)->get()
-            : ($currentUser->isAdmin()
-                ? User::latest()->with('role')->where('created_by', $currentUser->id)->take(5)->get()
-                : collect());
 
         // Get filtered roles based on user's permissions
         $roles = $this->getAvailableRoles();
 
-        // Build navigation tabs including sign-out
+        // Build navigation tabs based on user role
         $tabs = [
             'overview' => [
                 'name' => 'Overview',
@@ -95,9 +202,51 @@ class Dashboard extends Component
                 'name' => 'Users',
                 'icon' => 'users'
             ];
+
+            // Add admin dashboard tabs
+            $tabs['categories'] = [
+                'name' => 'Categories',
+                'icon' => 'folder'
+            ];
+
+            $tabs['products'] = [
+                'name' => 'Products',
+                'icon' => 'shopping-bag'
+            ];
+
+            $tabs['shops'] = [
+                'name' => 'Shop Approvals',
+                'icon' => 'store'
+            ];
+
+            $tabs['product_suggestions'] = [
+                'name' => 'Product Suggestions',
+                'icon' => 'clipboard-check'
+            ];
         }
 
-        // Add settings tab
+        // Add activity logs tab for superadmins only
+        if ($currentUser->isSuperadmin()) {
+            $tabs['activity_logs'] = [
+                'name' => 'Activity Logs',
+                'icon' => 'clipboard-list'
+            ];
+        }
+
+        // Add role-specific tabs
+        if ($currentUser->isManager() || $currentUser->role->name == 'normal user') {
+            $tabs['my_tasks'] = [
+                'name' => 'My Tasks',
+                'icon' => 'clipboard'
+            ];
+
+            $tabs['my_reports'] = [
+                'name' => 'My Reports',
+                'icon' => 'chart-bar'
+            ];
+        }
+
+        // Add settings tab for all users
         $tabs['settings'] = [
             'name' => 'Settings',
             'icon' => 'cog'
@@ -115,12 +264,28 @@ class Dashboard extends Component
             'totalRoles' => $totalRoles,
             'usersByRole' => $usersByRole,
             'recentUsers' => $recentUsers,
+            'userActivity' => $userActivity,
             'users' => $users,
             'roles' => $roles,
             'showHeaderNav' => $this->showHeaderNav,
             'tabs' => $tabs,
+            'myTasks' => $myTasks,
+            'myReports' => $myReports,
+            // Admin dashboard stats
+            'totalCategories' => $totalCategories,
+            'totalProducts' => $totalProducts,
+            'pendingShops' => $pendingShops,
+            'productSuggestions' => $productSuggestions
         ]);
     }
+
+    // Updated search method to filter users
+    public function updatedSearchTerm()
+    {
+        $this->resetPage();
+    }
+
+    // ... rest of the class remains the same (save, edit, delete, etc.)
 
     public function save()
     {
