@@ -830,8 +830,8 @@ class Dashboard extends Component
         }
         
         // Get all categories that have products in this shop
-        $shopCategories = ShopProduct::where('shop_id', $this->selectedShopId)
-            ->join('products', 'shop_products.product_id', '=', 'products.id')
+        $shopCategories = ShopProduct::where('shop_products.shop_id', $this->selectedShopId)
+            ->join('products', 'shop_products.global_product_id', '=', 'products.id')
             ->join('categories', 'products.category_id', '=', 'categories.id')
             ->select('categories.id', 'categories.name')
             ->distinct()
@@ -842,16 +842,16 @@ class Dashboard extends Component
         $this->productsByCategory = [];
         
         foreach ($shopCategories as $category) {
-            $products = ShopProduct::where('shop_id', $this->selectedShopId)
-                ->join('products', 'shop_products.product_id', '=', 'products.id')
+            $products = ShopProduct::where('shop_products.shop_id', $this->selectedShopId)
+                ->join('products', 'shop_products.global_product_id', '=', 'products.id')
                 ->where('products.category_id', $category->id)
                 ->select(
                     'shop_products.id',
-                    'shop_products.product_id',
+                    'shop_products.global_product_id',
                     'products.name',
                     'products.description',
                     'shop_products.price',
-                    'shop_products.stock',
+                    'shop_products.stock_quantity as stock',
                     'shop_products.status'
                 )
                 ->orderBy('products.name')
