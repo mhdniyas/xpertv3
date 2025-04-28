@@ -83,12 +83,12 @@ class Dashboard extends Component
         }
 
         // Load user shop metrics
-        $this->userShopCount = Shop::where('user_id', $this->currentUser->id)->count();
-        $this->userActiveShops = Shop::where('user_id', $this->currentUser->id)
+        $this->userShopCount = Shop::where('owner_id', $this->currentUser->id)->count();
+        $this->userActiveShops = Shop::where('owner_id', $this->currentUser->id)
             ->where('status', 'active')
             ->count();
         $this->userShopProducts = ShopProduct::whereHas('shop', function ($query) {
-            $query->where('user_id', $this->currentUser->id);
+            $query->where('owner_id', $this->currentUser->id);
         })->count();
 
         // Sample sales data (replace with actual implementation when available)
