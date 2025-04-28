@@ -7,6 +7,7 @@ use App\Models\Role;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Shop;
+use App\Models\ShopProduct;
 use App\Models\ActivityLog;
 use Livewire\Component;
 use Livewire\WithPagination;
