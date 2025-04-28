@@ -11,7 +11,7 @@
                     <p class="text-xs text-gray-500 truncate">{{ $currentUser->email }}</p>
                 </div>
             </div>
-            
+
             <nav class="mt-4" aria-label="Sidebar">
                 <div class="px-2 space-y-1">
                     @foreach($tabs as $tabKey => $tabData)
