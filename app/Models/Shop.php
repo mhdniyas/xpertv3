@@ -50,6 +50,16 @@ class Shop extends Model
     }
 
     /**
+     * Get the staff members assigned to this shop.
+     */
+    public function staff()
+    {
+        return $this->belongsToMany(User::class, 'shop_user')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
+    /**
      * Get all products for this shop.
      */
     public function products()

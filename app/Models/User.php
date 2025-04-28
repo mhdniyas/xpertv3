@@ -85,6 +85,24 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the shops where this user is the owner
+     */
+    public function ownedShops()
+    {
+        return $this->hasMany(Shop::class, 'owner_id');
+    }
+
+    /**
+     * Get the shops where this user is assigned as staff
+     */
+    public function assignedShops()
+    {
+        return $this->belongsToMany(Shop::class, 'shop_user')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
+    /**
      * Check if user has superadmin role
      */
     public function isSuperadmin()
@@ -106,5 +124,13 @@ class User extends Authenticatable
     public function isManager()
     {
         return $this->role->name === 'manager';
+    }
+
+    /**
+     * Check if user has staff role
+     */
+    public function isStaff()
+    {
+        return $this->role->name === 'staff';
     }
 }
