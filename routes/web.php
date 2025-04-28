@@ -2,6 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Livewire\UserManager;
+use App\Livewire\ShopMarketplace;
+use App\Livewire\ShopCategoryManager;
+use App\Livewire\ShopProductManager;
+use App\Http\Controllers\ShopController;
 // Removed AdminDashboard import as it doesn't exist
 
 Route::view('/', 'welcome');
@@ -47,6 +51,22 @@ Route::middleware(['auth'])->group(function () {
         ->name('admin.users');
 });
 
-// Removed duplicate AdminDashboard route
+// Shop Marketplace Routes
+Route::get('/marketplace', ShopMarketplace::class)->name('marketplace');
+Route::get('/shop/{slug}', [ShopController::class, 'show'])->name('shop.show');
+Route::get('/shop/{shopSlug}/product/{productSlug}', [ShopController::class, 'showProduct'])->name('shop.product.show');
+
+// Shop Management Routes (Protected)
+Route::middleware(['auth'])->group(function () {
+    // Shop Category Management
+    Route::get('/shop/{shop}/categories', ShopCategoryManager::class)
+        ->name('shop.categories')
+        ->middleware('can:manageCategories,shop');
+    
+    // Shop Product Management
+    Route::get('/shop/{shop}/products', ShopProductManager::class)
+        ->name('shop.products')
+        ->middleware('can:manageProducts,shop');
+});
 
 require __DIR__.'/auth.php';

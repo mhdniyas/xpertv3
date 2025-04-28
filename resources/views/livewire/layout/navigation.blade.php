@@ -2,6 +2,7 @@
 
 use App\Livewire\Actions\Logout;
 use Livewire\Volt\Component;
+use Illuminate\Support\Facades\Auth;
 
 new class extends Component
 {
@@ -33,6 +34,17 @@ new class extends Component
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    
+                    <!-- Shop Marketplace Link -->
+                    <x-nav-link :href="route('marketplace')" :active="request()->routeIs('marketplace')" wire:navigate>
+                        {{ __('Shops') }}
+                    </x-nav-link>
+                    
+                    @if(Auth::check() && Auth::user()->shop)
+                        <x-nav-link :href="route('shop.show', Auth::user()->shop->slug)" :active="request()->routeIs('shop.show')" wire:navigate>
+                            {{ __('My Shop') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -84,6 +96,17 @@ new class extends Component
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate>
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+            
+            <!-- Mobile Shop Marketplace Link -->
+            <x-responsive-nav-link :href="route('marketplace')" :active="request()->routeIs('marketplace')" wire:navigate>
+                {{ __('Shops') }}
+            </x-responsive-nav-link>
+            
+            @if(Auth::check() && Auth::user()->shop)
+                <x-responsive-nav-link :href="route('shop.show', Auth::user()->shop->slug)" :active="request()->routeIs('shop.show')" wire:navigate>
+                    {{ __('My Shop') }}
+                </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->

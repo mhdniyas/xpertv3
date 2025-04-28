@@ -64,7 +64,15 @@ class Shop extends Model
      */
     public function products()
     {
-        return $this->hasMany(Product::class);
+        return $this->hasMany(ShopProduct::class);
+    }
+    
+    /**
+     * Get all categories for this shop.
+     */
+    public function shopCategories()
+    {
+        return $this->hasMany(ShopCategory::class);
     }
 
     /**

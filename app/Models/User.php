@@ -103,6 +103,15 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the user's primary shop (the first owned shop)
+     * This is used for the "My Shop" navigation link
+     */
+    public function getShopAttribute()
+    {
+        return $this->ownedShops()->where('status', 'approved')->where('is_active', true)->first();
+    }
+
+    /**
      * Check if user has superadmin role
      */
     public function isSuperadmin()
@@ -132,5 +141,17 @@ class User extends Authenticatable
     public function isStaff()
     {
         return $this->role->name === 'staff';
+    }
+
+    /**
+     * Check if the user has a specific role by name
+     */
+    public function hasRole($roleName)
+    {
+        if (!$this->role) {
+            return false;
+        }
+        
+        return $this->role->name === $roleName;
     }
 }
