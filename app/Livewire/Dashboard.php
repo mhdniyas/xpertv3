@@ -33,11 +33,31 @@ class Dashboard extends Component
     public $oldPhoto;
     public $searchTerm = '';
 
+    public $currentUser;
+    public $totalUsers;
+    public $totalRoles;
+    public $totalCategories;
+    public $totalProducts;
+    public $pendingShops;
+    public $productSuggestions;
+    public $userShopCount;
+    public $userActiveShops;
+    public $userShopProducts;
+    public $shopSales;
+    public $shopVisits;
+    public $recentShopActivities;
+
     protected $rules = [
         'name' => 'required|string|min:3|max:255',
         'email' => 'required|email|max:255',
         'role_id' => 'required|exists:roles,id',
     ];
+
+    public function mount()
+    {
+        $this->currentUser = Auth::user();
+        $this->loadDashboardData();
+    }
 
     public function setActiveTab($tab)
     {
@@ -46,6 +66,46 @@ class Dashboard extends Component
         } else {
             $this->activeTab = $tab;
             $this->resetPage();
+        }
+    }
+
+    public function loadDashboardData()
+    {
+        // Load system statistics
+        if ($this->currentUser->isAdmin() || $this->currentUser->isSuperadmin()) {
+            $this->totalUsers = User::count();
+            $this->totalRoles = Role::count();
+            $this->totalCategories = Category::count();
+            $this->totalProducts = Product::count();
+            $this->pendingShops = Shop::where('status', 'pending')->count();
+            $this->productSuggestions = 0; // Replace with actual implementation when available
+        }
+
+        // Load user shop metrics
+        $this->userShopCount = Shop::where('user_id', $this->currentUser->id)->count();
+        $this->userActiveShops = Shop::where('user_id', $this->currentUser->id)
+            ->where('status', 'active')
+            ->count();
+        $this->userShopProducts = ShopProduct::whereHas('shop', function ($query) {
+            $query->where('user_id', $this->currentUser->id);
+        })->count();
+
+        // Sample sales data (replace with actual implementation when available)
+        $this->shopSales = [
+            'total' => 5280,
+            'growth' => 12,
+            'period' => 'Last 30 days'
+        ];
+
+        // Sample visits data (replace with actual implementation when available)
+        $this->shopVisits = 1240;
+
+        // Recent shop activities for admins
+        if ($this->currentUser->isAdmin() || $this->currentUser->isSuperadmin()) {
+            $this->recentShopActivities = Shop::with('owner')
+                ->orderBy('created_at', 'desc')
+                ->take(6)
+                ->get();
         }
     }
 
@@ -69,6 +129,15 @@ class Dashboard extends Component
         $totalProducts = 0;
         $pendingShops = 0;
         $productSuggestions = 0;
+        
+        // Initialize shop metrics
+        $userShopCount = 0;
+        $userShopProducts = 0;
+        $userActiveShops = 0;
+        $topSellingProducts = collect();
+        $recentShopActivities = collect();
+        $shopSales = [];
+        $shopVisits = 0;
 
         // Build user-specific data based on the active tab
         switch ($this->activeTab) {
@@ -85,6 +154,28 @@ class Dashboard extends Component
                     $totalProducts = Product::where('is_global', true)->count();
                     $pendingShops = Shop::where('status', 'pending')->count();
                     $productSuggestions = Product::where('global_suggestion', true)->count();
+                    
+                    // Get overall shop metrics for superadmin
+                    $userShopCount = Shop::count();
+                    $userActiveShops = Shop::where('status', 'active')->count();
+                    $userShopProducts = ShopProduct::count();
+                    
+                    // Get recent shop activities
+                    $recentShopActivities = Shop::with('owner')
+                        ->latest()
+                        ->take(5)
+                        ->get();
+                        
+                    // Calculate shop metrics for the last 30 days (mockup data)
+                    // In a real application, this would be connected to your sales/analytics data
+                    $shopSales = [
+                        'total' => Shop::count() * rand(1000, 5000),
+                        'growth' => rand(5, 25),
+                        'period' => '30 days'
+                    ];
+                    
+                    $shopVisits = Shop::count() * rand(500, 2000);
+                    
                 } elseif ($currentUser->isAdmin()) {
                     // Admin only sees users they created
                     $totalUsers = User::where('created_by', $currentUser->id)->count();
@@ -104,15 +195,82 @@ class Dashboard extends Component
                     $totalProducts = Product::where('is_global', true)->count();
                     $pendingShops = Shop::where('status', 'pending')->count();
                     $productSuggestions = Product::where('global_suggestion', true)->count();
+                    
+                    // Get shop metrics for admin view
+                    $userShopCount = Shop::count();
+                    $userActiveShops = Shop::where('status', 'active')->count();
+                    $userShopProducts = ShopProduct::count();
+                    
+                    // Get recent shop activities
+                    $recentShopActivities = Shop::with('owner')
+                        ->latest()
+                        ->take(5)
+                        ->get();
+                    
+                    // Calculate shop metrics for the last 30 days (mockup data)
+                    $shopSales = [
+                        'total' => Shop::count() * rand(800, 4000),
+                        'growth' => rand(5, 25),
+                        'period' => '30 days'
+                    ];
+                    
+                    $shopVisits = Shop::count() * rand(400, 1800);
+                    
                 } elseif ($currentUser->isManager()) {
                     // Manager sees only relevant information
                     $userActivity = User::where('role_id', 4) // normal users
                         ->latest()
                         ->take(5)
                         ->get();
+                    
+                    // Get shop metrics for managers
+                    $userShopCount = Shop::where('owner_id', $currentUser->id)->count();
+                    $userShopProducts = ShopProduct::whereHas('shop', function($query) use ($currentUser) {
+                        $query->where('owner_id', $currentUser->id);
+                    })->count();
+                    $userActiveShops = Shop::where('owner_id', $currentUser->id)
+                        ->where('status', 'active')
+                        ->count();
+                    
+                    // Get top selling products (mock data for now)
+                    $topSellingProducts = ShopProduct::whereHas('shop', function($query) use ($currentUser) {
+                        $query->where('owner_id', $currentUser->id);
+                    })
+                    ->take(5)
+                    ->get();
+                    
+                    // Calculate shop metrics for manager's shops (mockup data)
+                    $shopSales = [
+                        'total' => $userShopCount * rand(500, 2000),
+                        'growth' => rand(3, 20),
+                        'period' => '30 days'
+                    ];
+                    
+                    $shopVisits = $userShopCount * rand(200, 1000);
+                    
                 } else {
                     // Regular user just sees their own data
                     $userActivity = collect([$currentUser]);
+                    
+                    // Get shop metrics if the user has any shops
+                    $userShopCount = Shop::where('owner_id', $currentUser->id)->count();
+                    $userShopProducts = ShopProduct::whereHas('shop', function($query) use ($currentUser) {
+                        $query->where('owner_id', $currentUser->id);
+                    })->count();
+                    $userActiveShops = Shop::where('owner_id', $currentUser->id)
+                        ->where('status', 'active')
+                        ->count();
+                    
+                    // Calculate shop metrics for user's shops (mockup data) 
+                    if ($userShopCount > 0) {
+                        $shopSales = [
+                            'total' => $userShopCount * rand(200, 1000),
+                            'growth' => rand(1, 15),
+                            'period' => '30 days'
+                        ];
+                        
+                        $shopVisits = $userShopCount * rand(100, 500);
+                    }
                 }
                 break;
 
@@ -275,7 +433,15 @@ class Dashboard extends Component
             'totalCategories' => $totalCategories,
             'totalProducts' => $totalProducts,
             'pendingShops' => $pendingShops,
-            'productSuggestions' => $productSuggestions
+            'productSuggestions' => $productSuggestions,
+            // Shop metrics
+            'userShopCount' => $userShopCount,
+            'userShopProducts' => $userShopProducts,
+            'userActiveShops' => $userActiveShops,
+            'topSellingProducts' => $topSellingProducts,
+            'recentShopActivities' => $recentShopActivities,
+            'shopSales' => $shopSales,
+            'shopVisits' => $shopVisits
         ]);
     }
 

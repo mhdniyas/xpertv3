@@ -155,6 +155,147 @@
                         </div>
                     </div>
 
+                    <!-- Shop Metrics Section -->
+                    @if(isset($userShopCount) && $userShopCount > 0)
+                    <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg mb-6">
+                        <div class="flex items-start justify-between mb-6">
+                            <div>
+                                <h2 class="text-lg font-medium text-gray-900">Shop Performance</h2>
+                                <p class="mt-1 text-sm text-gray-600">Overview of your shop metrics and activity.</p>
+                            </div>
+                            <div class="flex-shrink-0 bg-gradient-to-r from-indigo-500 to-blue-600 rounded-md p-2">
+                                <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Shop Stats Cards -->
+                        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                            <!-- Total Shops Card -->
+                            <div class="relative overflow-hidden rounded-lg bg-white px-4 pt-5 pb-12 shadow sm:px-6 sm:pt-6">
+                                <dt>
+                                    <div class="absolute rounded-md bg-indigo-500 p-3">
+                                        <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                        </svg>
+                                    </div>
+                                    <p class="ml-16 truncate text-sm font-medium text-gray-500">Total Shops</p>
+                                </dt>
+                                <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
+                                    <p class="text-2xl font-semibold text-gray-900">{{ $userShopCount }}</p>
+                                    @if($userShopCount > 0 && $userActiveShops < $userShopCount)
+                                    <p class="ml-2 flex items-baseline text-sm font-semibold text-yellow-600">
+                                        <span class="rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+                                            {{ $userShopCount - $userActiveShops }} pending
+                                        </span>
+                                    </p>
+                                    @endif
+                                    <div class="absolute inset-x-0 bottom-0 bg-gray-50 px-4 py-4 sm:px-6">
+                                        <div class="text-sm">
+                                            <button wire:click="setActiveTab('shops')" class="font-medium text-indigo-600 hover:text-indigo-500">View all shops<span class="sr-only"> Total Shops stats</span></button>
+                                        </div>
+                                    </div>
+                                </dd>
+                            </div>
+
+                            <!-- Products Card -->
+                            <div class="relative overflow-hidden rounded-lg bg-white px-4 pt-5 pb-12 shadow sm:px-6 sm:pt-6">
+                                <dt>
+                                    <div class="absolute rounded-md bg-indigo-500 p-3">
+                                        <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                        </svg>
+                                    </div>
+                                    <p class="ml-16 truncate text-sm font-medium text-gray-500">Shop Products</p>
+                                </dt>
+                                <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
+                                    <p class="text-2xl font-semibold text-gray-900">{{ $userShopProducts }}</p>
+                                    <div class="absolute inset-x-0 bottom-0 bg-gray-50 px-4 py-4 sm:px-6">
+                                        <div class="text-sm">
+                                            <button wire:click="setActiveTab('products')" class="font-medium text-indigo-600 hover:text-indigo-500">View all products<span class="sr-only"> Total Products stats</span></button>
+                                        </div>
+                                    </div>
+                                </dd>
+                            </div>
+
+                            <!-- Sales Card -->
+                            @if(isset($shopSales) && !empty($shopSales))
+                            <div class="relative overflow-hidden rounded-lg bg-white px-4 pt-5 pb-12 shadow sm:px-6 sm:pt-6">
+                                <dt>
+                                    <div class="absolute rounded-md bg-green-500 p-3">
+                                        <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <p class="ml-16 truncate text-sm font-medium text-gray-500">Sales ({{ $shopSales['period'] }})</p>
+                                </dt>
+                                <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
+                                    <p class="text-2xl font-semibold text-gray-900">${{ number_format($shopSales['total'], 0) }}</p>
+                                    <p class="ml-2 flex items-baseline text-sm font-semibold text-green-600">
+                                        <svg class="h-5 w-5 flex-shrink-0 self-center text-green-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612L5.29 9.77a.75.75 0 01-1.08-1.04l5.25-5.5a.75.75 0 011.08 0l5.25 5.5a.75.75 0 11-1.08 1.04l-3.96-4.158V16.25A.75.75 0 0110 17z" clip-rule="evenodd" />
+                                        </svg>
+                                        <span class="sr-only"> Increased by </span>
+                                        {{ $shopSales['growth'] }}%
+                                    </p>
+                                    <div class="absolute inset-x-0 bottom-0 bg-gray-50 px-4 py-4 sm:px-6">
+                                        <div class="text-sm">
+                                            <button class="font-medium text-indigo-600 hover:text-indigo-500">View sales report<span class="sr-only"> Sales stats</span></button>
+                                        </div>
+                                    </div>
+                                </dd>
+                            </div>
+                            @endif
+
+                            <!-- Visitors Card -->
+                            @if(isset($shopVisits) && $shopVisits > 0)
+                            <div class="relative overflow-hidden rounded-lg bg-white px-4 pt-5 pb-12 shadow sm:px-6 sm:pt-6">
+                                <dt>
+                                    <div class="absolute rounded-md bg-blue-500 p-3">
+                                        <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                    </div>
+                                    <p class="ml-16 truncate text-sm font-medium text-gray-500">Shop Visits (30 days)</p>
+                                </dt>
+                                <dd class="ml-16 flex items-baseline pb-6 sm:pb-7">
+                                    <p class="text-2xl font-semibold text-gray-900">{{ number_format($shopVisits, 0) }}</p>
+                                    <div class="absolute inset-x-0 bottom-0 bg-gray-50 px-4 py-4 sm:px-6">
+                                        <div class="text-sm">
+                                            <button class="font-medium text-indigo-600 hover:text-indigo-500">View visitor stats<span class="sr-only"> Visitors stats</span></button>
+                                        </div>
+                                    </div>
+                                </dd>
+                            </div>
+                            @endif
+                        </div>
+
+                        @if($currentUser->isAdmin() || $currentUser->isSuperadmin())
+                        <!-- Recent Shop Activities Section -->
+                        <div class="mt-8">
+                            <h3 class="text-base font-semibold leading-6 text-gray-900">Recent Shop Activities</h3>
+                            <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                                @foreach($recentShopActivities as $shop)
+                                <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+                                    <dt class="truncate text-sm font-medium text-gray-500">{{ $shop->name }}</dt>
+                                    <dd class="mt-1 text-md font-semibold text-gray-900 flex items-center">
+                                        <span class="inline-flex items-center rounded-md bg-{{ $shop->status === 'active' ? 'green' : ($shop->status === 'pending' ? 'yellow' : 'gray') }}-50 px-2 py-1 text-xs font-medium text-{{ $shop->status === 'active' ? 'green' : ($shop->status === 'pending' ? 'yellow' : 'gray') }}-700 mr-2">
+                                            {{ ucfirst($shop->status) }}
+                                        </span>
+                                        <span class="text-sm font-normal text-gray-500">
+                                            Created {{ $shop->created_at->diffForHumans() }} by {{ $shop->owner->name }}
+                                        </span>
+                                    </dd>
+                                </div>
+                                @endforeach
+                            </dl>
+                        </div>
+                        @endif
+                    </div>
+                    @endif
+
                     <!-- Dashboard Stats -->
                     @if($currentUser->isAdmin() || $currentUser->isSuperadmin())
                     <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg mb-6">
