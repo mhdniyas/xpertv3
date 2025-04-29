@@ -1007,6 +1007,15 @@ class ShopManager extends Component
     // Method to save product variants
     private function saveProductVariants($product)
     {
+        if (!$this->shopProductId) {
+            session()->flash('error', 'No product selected for variant management.');
+            return;
+        }
+        
+        $product->has_variants = $this->hasVariants;
+        $product->save();
+        
+        // Save variant options and variants
         // This would handle saving variant options and variant combinations
         // For example, saving color and size options, and then creating
         // variants for each combination (Red-Small, Red-Medium, Blue-Small, etc.)
