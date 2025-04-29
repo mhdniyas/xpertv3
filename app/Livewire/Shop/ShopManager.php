@@ -1867,8 +1867,8 @@ class ShopManager extends Component
         $this->isManagingVariants = true;
     }
     
-    // Save product variants
-    public function saveProductVariants()
+    // Save product variants data from variants management modal
+    public function manageProductVariantsData()
     {
         if (!$this->shopProductId) {
             session()->flash('error', 'No product selected for variant management.');
