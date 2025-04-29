@@ -137,7 +137,8 @@ class ShopManager extends Component
         'selectShopForProductManagement',
         'refreshShopList' => '$refresh',
         'productImported' => 'handleProductImport',
-        'variantAdded' => 'refreshVariants'
+        'variantAdded' => 'refreshVariants',
+        'globalProductSelected' => 'handleGlobalProductSelection'
     ];
 
     protected function rules()
@@ -1528,5 +1529,270 @@ class ShopManager extends Component
         $product->save();
         
         session()->flash('message', 'Stock updated successfully.');
+    }
+
+    // Open global product browser
+    public function browseGlobalProducts()
+    {
+        $this->isEditingProduct = false;
+        $this->dispatch('openGlobalProductBrowser', $this->selectedShopId);
+    }
+    
+    // Handle global product selection
+    public function handleGlobalProductSelection($product)
+    {
+        // Create a new shop product from the global product
+        $currentUser = Auth::user();
+        
+        // Check if the product already exists in the shop
+        $existingProduct = ShopProduct::where('shop_id', $this->selectedShopId)
+            ->where('global_product_id', $product['id'])
+            ->first();
+            
+        if ($existingProduct) {
+            session()->flash('message', 'This product is already in your shop.');
+            return;
+        }
+        
+        // Create new product
+        $shopProduct = new ShopProduct();
+        $shopProduct->shop_id = $this->selectedShopId;
+        $shopProduct->name = $product['name'];
+        $shopProduct->slug = Str::slug($product['name']);
+        $shopProduct->description = $product['description'] ?? null;
+        $shopProduct->price = $product['price'] ?? 0;
+        $shopProduct->stock_quantity = 0; // Default to zero stock
+        $shopProduct->stock = 0; // For backward compatibility
+        $shopProduct->status = 'active';
+        $shopProduct->source_type = 'global';
+        $shopProduct->global_product_id = $product['id'];
+        $shopProduct->created_by = $currentUser->id;
+        
+        // Set a default category if one exists
+        $defaultCategory = ShopCategory::where('shop_id', $this->selectedShopId)
+            ->orderBy('id')
+            ->first();
+            
+        $shopProduct->shop_category_id = $defaultCategory ? $defaultCategory->id : null;
+        
+        // Copy image if exists
+        if (!empty($product['image'])) {
+            $shopProduct->image = $product['image'];
+        }
+        
+        $shopProduct->save();
+        
+        session()->flash('message', 'Product imported successfully.');
+    }
+    
+    // Initialize product creation from global product
+    public function initFromGlobalProduct($globalProductId)
+    {
+        $globalProduct = Product::find($globalProductId);
+        
+        if (!$globalProduct) {
+            session()->flash('error', 'Global product not found.');
+            return;
+        }
+        
+        $this->resetValidation();
+        $this->reset([
+            'shopProductId', 'productName', 'productDescription', 'productPrice',
+            'productStock', 'productCategoryId', 'productImage', 'existingProductImage',
+            'productStatus', 'productUnit', 'productSku', 'productBarcode',
+            'productCost', 'productTags'
+        ]);
+        
+        // Populate fields from global product
+        $this->productName = $globalProduct->name;
+        $this->productDescription = $globalProduct->description;
+        $this->productPrice = $globalProduct->price;
+        $this->productStock = 0; // Default to zero stock for new products
+        $this->productStatus = 'active';
+        $this->productSourceType = 'global';
+        $this->globalProductId = $globalProduct->id;
+        
+        if ($globalProduct->category_id) {
+            // Try to map the global category to a shop category
+            $shopCategory = ShopCategory::where('shop_id', $this->selectedShopId)
+                ->where('category_id', $globalProduct->category_id)
+                ->first();
+                
+            if ($shopCategory) {
+                $this->productCategoryId = $shopCategory->id;
+            }
+        }
+        
+        // If no matching shop category was found, use the first available category
+        if (!$this->productCategoryId) {
+            $this->productCategoryId = ShopCategory::where('shop_id', $this->selectedShopId)
+                ->orderBy('id')
+                ->value('id');
+        }
+        
+        $this->isEditingProduct = true;
+    }
+    
+    // Manage product inventory
+    public function manageInventory($productId)
+    {
+        $product = ShopProduct::findOrFail($productId);
+        
+        // Check permission
+        $shop = Shop::findOrFail($product->shop_id);
+        $this->authorize('update', $shop);
+        
+        $this->shopProductId = $product->id;
+        $this->productStock = $product->stock_quantity ?? $product->stock;
+        $this->productName = $product->name;
+        
+        $this->modalType = 'inventory';
+        $this->showConfirmModal = true;
+    }
+    
+    // Save inventory adjustment
+    public function saveInventoryAdjustment()
+    {
+        $this->validate([
+            'productStock' => 'required|integer|min:0',
+        ]);
+        
+        $product = ShopProduct::findOrFail($this->shopProductId);
+        $oldStock = $product->stock_quantity ?? $product->stock;
+        $adjustment = $this->productStock - $oldStock;
+        
+        // Update the stock
+        $product->stock_quantity = $this->productStock;
+        $product->stock = $this->productStock; // For backward compatibility
+        $product->save();
+        
+        // Log the adjustment
+        // This would typically log to an inventory_adjustments table
+        // For demonstration purposes only:
+        $adjustmentType = $adjustment > 0 ? 'addition' : 'reduction';
+        $message = 'Inventory ' . $adjustmentType . ' of ' . abs($adjustment) . ' units for product: ' . $product->name;
+        
+        // In a real implementation, you would log this properly:
+        // InventoryAdjustment::create([
+        //     'product_id' => $product->id,
+        //     'shop_id' => $product->shop_id,
+        //     'user_id' => Auth::id(),
+        //     'quantity' => $adjustment,
+        //     'type' => $adjustmentType,
+        //     'notes' => 'Manual adjustment via ShopManager',
+        //     'previous_stock' => $oldStock,
+        //     'new_stock' => $this->productStock
+        // ]);
+        
+        $this->shopProductId = null;
+        $this->productStock = null;
+        $this->modalType = '';
+        $this->showConfirmModal = false;
+        
+        session()->flash('message', 'Inventory updated successfully.');
+    }
+    
+    // Mark product as featured
+    public function toggleProductFeatured($productId)
+    {
+        $product = ShopProduct::findOrFail($productId);
+        
+        // Check permission
+        $shop = Shop::findOrFail($product->shop_id);
+        $this->authorize('update', $shop);
+        
+        $product->is_featured = !$product->is_featured;
+        $product->save();
+        
+        $status = $product->is_featured ? 'featured' : 'unfeatured';
+        session()->flash('message', 'Product ' . $status . ' successfully.');
+    }
+    
+    // Open product variants management
+    public function manageProductVariants($productId)
+    {
+        $product = ShopProduct::findOrFail($productId);
+        
+        // Check permission
+        $shop = Shop::findOrFail($product->shop_id);
+        $this->authorize('update', $shop);
+        
+        $this->shopProductId = $product->id;
+        $this->productName = $product->name;
+        $this->hasVariants = $product->has_variants;
+        
+        // Load existing variant options and variants
+        // This would depend on your variant model structure
+        
+        $this->isManagingVariants = true;
+    }
+    
+    // Save product variants
+    public function saveProductVariants()
+    {
+        if (!$this->shopProductId) {
+            session()->flash('error', 'No product selected for variant management.');
+            return;
+        }
+        
+        $product = ShopProduct::findOrFail($this->shopProductId);
+        $product->has_variants = $this->hasVariants;
+        $product->save();
+        
+        // Save variant options and variants
+        // This would depend on your variant model structure
+        
+        $this->isManagingVariants = false;
+        session()->flash('message', 'Product variants updated successfully.');
+    }
+    
+    // Cancel variants management
+    public function cancelVariantsManagement()
+    {
+        $this->isManagingVariants = false;
+        $this->reset([
+            'shopProductId', 'productName', 'hasVariants', 
+            'variantOptions', 'variants', 'editingVariantIndex'
+        ]);
+    }
+    
+    // Update product status directly
+    public function updateProductStatus($productId, $newStatus)
+    {
+        if (!in_array($newStatus, ['active', 'inactive'])) {
+            session()->flash('error', 'Invalid status.');
+            return;
+        }
+        
+        $product = ShopProduct::findOrFail($productId);
+        
+        // Check permission
+        $shop = Shop::findOrFail($product->shop_id);
+        $this->authorize('update', $shop);
+        
+        $product->status = $newStatus;
+        $product->save();
+        
+        session()->flash('message', 'Product status updated successfully.');
+    }
+    
+    // Quick price update
+    public function updateProductPrice($productId, $newPrice)
+    {
+        if (!is_numeric($newPrice) || $newPrice < 0) {
+            session()->flash('error', 'Price must be a positive number.');
+            return;
+        }
+        
+        $product = ShopProduct::findOrFail($productId);
+        
+        // Check permission
+        $shop = Shop::findOrFail($product->shop_id);
+        $this->authorize('update', $shop);
+        
+        $product->price = $newPrice;
+        $product->save();
+        
+        session()->flash('message', 'Price updated successfully.');
     }
 }
