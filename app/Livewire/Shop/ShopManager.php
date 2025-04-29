@@ -131,6 +131,17 @@ class ShopManager extends Component
     public $productsPerPage = 10;
     public $showProductGrid = false;
 
+    // Product SEO properties
+    public $metaTitle;
+    public $metaDescription;
+    public $metaKeywords;
+    public $seoSlug;
+
+    // For tag management
+    public $availableTags = [];
+    public $selectedTags = [];
+    public $newTag = '';
+
     protected $listeners = [
         'selectShopForStaffAssignment',
         'selectShopForCategoryManagement',
@@ -725,8 +736,12 @@ class ShopManager extends Component
             'productStock', 'productCategoryId', 'productImage', 'existingProductImage',
             'productStatus', 'productUnit', 'productSku', 'productBarcode',
             'productCost', 'productTags', 'productSourceType', 'globalProductId',
-            'hasVariants', 'variantOptions', 'variants'
+            'hasVariants', 'variantOptions', 'variants', 'metaTitle',
+            'metaDescription', 'metaKeywords', 'seoSlug', 'selectedTags'
         ]);
+
+        // Get all existing tags for this shop
+        $this->loadAvailableTags();
 
         if ($id) {
             $product = ShopProduct::findOrFail($id);
@@ -750,6 +765,19 @@ class ShopManager extends Component
             $this->productTags = $product->tags;
             $this->productSourceType = $product->source_type ?? 'local';
             $this->globalProductId = $product->global_product_id;
+            
+            // Load SEO fields
+            $this->metaTitle = $product->meta_title ?? $product->name;
+            $this->metaDescription = $product->meta_description ?? $product->description;
+            $this->metaKeywords = $product->meta_keywords ?? '';
+            $this->seoSlug = $product->seo_slug ?? $product->slug;
+            
+            // Load tags
+            if (!empty($product->tags)) {
+                $this->selectedTags = is_string($product->tags) 
+                    ? array_map('trim', explode(',', $product->tags)) 
+                    : $product->tags;
+            }
 
             // Load variants if any
             if ($product->has_variants) {
@@ -757,11 +785,98 @@ class ShopManager extends Component
                 // Load variant options and variants
                 // This would require additional model relationships
             }
+        } else {
+            // Set defaults for new product
+            $this->productStatus = 'active';
+            $this->productUnit = 'piece';
+            $this->productSourceType = 'local';
         }
 
         $this->isEditingProduct = true;
     }
 
+    // Load all available tags for the current shop
+    private function loadAvailableTags()
+    {
+        // Get distinct tags used in this shop
+        $products = ShopProduct::where('shop_id', $this->selectedShopId)->whereNotNull('tags')->get();
+        $allTags = [];
+        
+        foreach ($products as $product) {
+            if (empty($product->tags)) continue;
+            
+            $productTags = is_string($product->tags) 
+                ? array_map('trim', explode(',', $product->tags)) 
+                : $product->tags;
+                
+            $allTags = array_merge($allTags, $productTags);
+        }
+        
+        $this->availableTags = array_values(array_unique($allTags));
+    }
+    
+    // Add a new tag to the selected tags
+    public function addTag()
+    {
+        if (empty($this->newTag)) return;
+        
+        $tag = trim($this->newTag);
+        
+        if (!in_array($tag, $this->selectedTags)) {
+            $this->selectedTags[] = $tag;
+            
+            // Add to available tags if it's new
+            if (!in_array($tag, $this->availableTags)) {
+                $this->availableTags[] = $tag;
+            }
+        }
+        
+        $this->newTag = '';
+    }
+    
+    // Remove a tag from the selected tags
+    public function removeTag($tag)
+    {
+        $index = array_search($tag, $this->selectedTags);
+        if ($index !== false) {
+            unset($this->selectedTags[$index]);
+            $this->selectedTags = array_values($this->selectedTags);
+        }
+    }
+    
+    // Select an existing tag
+    public function selectTag($tag)
+    {
+        if (!in_array($tag, $this->selectedTags)) {
+            $this->selectedTags[] = $tag;
+        }
+    }
+    
+    // Generate SEO-friendly slug
+    public function generateSeoSlug()
+    {
+        if ($this->productName) {
+            $this->seoSlug = Str::slug($this->productName);
+        }
+    }
+    
+    // Generate meta title if empty
+    public function generateMetaTitle()
+    {
+        if (empty($this->metaTitle) && $this->productName) {
+            $this->metaTitle = $this->productName;
+        }
+    }
+    
+    // Generate meta description if empty
+    public function generateMetaDescription()
+    {
+        if (empty($this->metaDescription) && $this->productDescription) {
+            // Take first 160 characters of description for meta description
+            $this->metaDescription = Str::limit(strip_tags($this->productDescription), 160);
+        }
+    }
+    
     // Enhanced save product method with additional fields
     public function saveProduct()
     {
@@ -779,6 +894,12 @@ class ShopManager extends Component
             'productCost' => 'nullable|numeric|min:0',
             'productSourceType' => 'required|in:local,global',
             'hasVariants' => 'boolean',
+            
+            // SEO validation
+            'metaTitle' => 'nullable|string|max:70',
+            'metaDescription' => 'nullable|string|max:160',
+            'metaKeywords' => 'nullable|string|max:255',
+            'seoSlug' => 'nullable|string|max:100',
         ];
 
         // If product source is global, validate global product ID
@@ -808,6 +929,7 @@ class ShopManager extends Component
             $product->created_by = $currentUser->id;
         }
 
+        // Basic product info
         $product->name = $this->productName;
         $product->slug = Str::slug($this->productName);
         $product->description = $this->productDescription;
@@ -820,9 +942,17 @@ class ShopManager extends Component
         $product->sku = $this->productSku;
         $product->barcode = $this->productBarcode;
         $product->cost_price = $this->productCost;
-        $product->tags = $this->productTags;
         $product->source_type = $this->productSourceType;
         $product->has_variants = $this->hasVariants;
+        
+        // Process tags
+        $product->tags = !empty($this->selectedTags) ? implode(',', $this->selectedTags) : null;
+        
+        // SEO fields
+        $product->meta_title = $this->metaTitle;
+        $product->meta_description = $this->metaDescription;
+        $product->meta_keywords = $this->metaKeywords;
+        $product->seo_slug = !empty($this->seoSlug) ? Str::slug($this->seoSlug) : $product->slug;
 
         // If global product, link to it
         if ($this->productSourceType === 'global' && $this->globalProductId) {
@@ -866,7 +996,8 @@ class ShopManager extends Component
             'productStock', 'productCategoryId', 'productImage', 'existingProductImage',
             'productStatus', 'productUnit', 'productSku', 'productBarcode',
             'productCost', 'productTags', 'productSourceType', 'globalProductId',
-            'hasVariants', 'variantOptions', 'variants'
+            'hasVariants', 'variantOptions', 'variants', 'metaTitle',
+            'metaDescription', 'metaKeywords', 'seoSlug', 'selectedTags'
         ]);
 
         $this->isEditingProduct = false;
