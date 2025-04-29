@@ -447,4 +447,70 @@ class ShopDetails extends Component
         // Refresh staff list
         $this->loadStaffMembers();
     }
+    
+    /**
+     * Save a new product to the shop
+     */
+    public function saveProduct()
+    {
+        // Validate the product form data
+        $this->validate([
+            'productName' => 'required|string|max:255',
+            'productCategoryId' => 'required|exists:shop_categories,id',
+            'productPrice' => 'required|numeric|min:0',
+            'productDescription' => 'nullable|string|max:1000',
+            'productStock' => 'required|integer|min:0',
+            'productStatus' => 'required|in:active,inactive',
+            'productUnit' => 'nullable|string|max:50',
+        ]);
+
+        // Check if user has permission to add products to this shop
+        $shop = Shop::findOrFail($this->selectedShopId);
+        $currentUser = Auth::user();
+        $canManageProducts = $currentUser->isAdmin() || 
+                            $currentUser->isSuperadmin() || 
+                            $shop->owner_id == $currentUser->id || 
+                            $shop->staff()->where('user_id', $currentUser->id)
+                                 ->where('role', 'manager')
+                                 ->exists();
+
+        if (!$canManageProducts) {
+            session()->flash('error', 'You do not have permission to add products to this shop.');
+            return;
+        }
+
+        try {
+            // Create the new shop product
+            $product = new ShopProduct();
+            $product->shop_id = $this->selectedShopId;
+            $product->shop_category_id = $this->productCategoryId;
+            $product->name = $this->productName;
+            $product->description = $this->productDescription;
+            $product->price = $this->productPrice;
+            $product->stock_quantity = $this->productStock;
+            $product->status = $this->productStatus;
+            $product->unit = $this->productUnit;
+            $product->source_type = 'local'; // This is a locally created product
+            $product->created_by = $currentUser->id;
+            $product->save();
+
+            // Reset the form fields
+            $this->reset([
+                'productName', 
+                'productDescription', 
+                'productPrice', 
+                'productStock', 
+                'productUnit'
+            ]);
+            $this->productStatus = 'active';
+
+            // Reload the inventory data
+            $this->loadShopInventory();
+
+            // Set success message
+            session()->flash('message', 'Product added successfully!');
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error adding product: ' . $e->getMessage());
+        }
+    }
 }
