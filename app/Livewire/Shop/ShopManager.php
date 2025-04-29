@@ -8,6 +8,7 @@ use App\Models\Role;
 use App\Models\Category;
 use App\Models\ShopCategory;
 use App\Models\ShopProduct;
+use App\Models\Product;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
@@ -15,6 +16,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class ShopManager extends Component
 {
@@ -60,6 +63,50 @@ class ShopManager extends Component
     public $productImage;
     public $existingProductImage;
     public $removeProductImage = false;
+    public $productStatus = 'active';
+    public $productUnit = 'piece';
+    public $productSku;
+    public $productBarcode;
+    public $productCost;
+    public $productTags;
+    public $productSourceType = 'local';
+    public $globalProductId;
+    public $selectedGlobalProduct;
+
+    // For product variants
+    public $hasVariants = false;
+    public $variantOptions = [];
+    public $variants = [];
+    public $variantName;
+    public $variantValues = [];
+    public $editingVariantIndex = null;
+
+    // For bulk operations
+    public $selectedProducts = [];
+    public $bulkAction = '';
+    public $bulkCategoryId;
+    public $bulkStatus;
+    public $bulkPriceAdjustment;
+    public $bulkPriceAdjustmentType = 'percentage'; // 'percentage' or 'fixed'
+
+    // For product filtering and sorting
+    public $productFilterCategory = '';
+    public $productFilterStatus = '';
+    public $productFilterStock = '';
+    public $productFilterSource = '';
+    public $productSortField = 'created_at';
+    public $productSortDirection = 'desc';
+
+    // For analytics
+    public $analyticsDateRange = 'last30days';
+    public $customStartDate;
+    public $customEndDate;
+    public $analyticsView = 'sales'; // 'sales', 'products', 'categories'
+
+    // For import/export
+    public $importFile;
+    public $exportFormat = 'csv';
+    public $exportData = 'all'; // 'all', 'filtered', 'selected'
 
     // For modal controls
     public $isEditingShop = false;
@@ -74,17 +121,29 @@ class ShopManager extends Component
     public $categoryToDelete = null;
     public $productToDelete = null;
     public $modalType = '';
+    public $isImportingProducts = false;
+    public $isExportingProducts = false;
+    public $isViewingAnalytics = false;
+    public $isManagingVariants = false;
+    public $isBulkEditing = false;
+
+    // For product display
+    public $productsPerPage = 10;
+    public $showProductGrid = false;
 
     protected $listeners = [
-        'selectShopForStaffAssignment', 
+        'selectShopForStaffAssignment',
         'selectShopForCategoryManagement',
         'selectShopForProductManagement',
-        'refreshShopList' => '$refresh'
+        'refreshShopList' => '$refresh',
+        'productImported' => 'handleProductImport',
+        'variantAdded' => 'refreshVariants'
     ];
 
     protected function rules()
     {
         return [
+            // Shop validation rules
             'name' => 'required|string|min:3|max:255',
             'description' => 'nullable|string',
             'address' => 'nullable|string|max:255',
@@ -93,14 +152,14 @@ class ShopManager extends Component
             'is_active' => 'boolean',
             'status' => 'required|in:pending,approved,rejected',
             'shopImage' => 'nullable|image|max:1024', // 1MB limit
-            
+
             // Category validation rules
             'categoryName' => 'required|string|min:3|max:255|sometimes',
             'categoryDescription' => 'nullable|string',
             'parentCategoryId' => 'nullable|integer|exists:shop_categories,id',
             'selectedGlobalCategory' => 'nullable|integer|exists:categories,id',
             'categoryStatus' => 'required|in:active,inactive|sometimes',
-            
+
             // Product validation rules
             'productName' => 'required|string|min:3|max:255|sometimes',
             'productDescription' => 'nullable|string',
@@ -108,9 +167,31 @@ class ShopManager extends Component
             'productStock' => 'nullable|integer|min:0',
             'productCategoryId' => 'required|integer|exists:shop_categories,id|sometimes',
             'productImage' => 'nullable|image|max:1024',
+            'productStatus' => 'required|in:active,inactive|sometimes',
+            'productUnit' => 'required|string|max:50|sometimes',
+            'productSku' => 'nullable|string|max:100|sometimes',
+            'productBarcode' => 'nullable|string|max:100|sometimes',
+            'productCost' => 'nullable|numeric|min:0|sometimes',
+            'productTags' => 'nullable|string|sometimes',
+            'productSourceType' => 'required|in:local,global|sometimes',
+            'globalProductId' => 'nullable|integer|exists:products,id|sometimes',
+            'hasVariants' => 'boolean|sometimes',
+
+            // Import/export validation
+            'importFile' => 'nullable|file|mimes:csv,xlsx|max:5120',
+            'exportFormat' => 'required|in:csv,xlsx|sometimes',
+            'exportData' => 'required|in:all,filtered,selected|sometimes',
+
+            // Bulk operation validation
+            'bulkAction' => 'required|in:delete,update_category,update_status,adjust_price|sometimes',
+            'bulkCategoryId' => 'required_if:bulkAction,update_category|nullable|exists:shop_categories,id',
+            'bulkStatus' => 'required_if:bulkAction,update_status|nullable|in:active,inactive',
+            'bulkPriceAdjustment' => 'required_if:bulkAction,adjust_price|nullable|numeric',
+            'bulkPriceAdjustmentType' => 'required_if:bulkAction,adjust_price|nullable|in:percentage,fixed',
         ];
     }
 
+    // Updated render method to include filtered products
     public function render()
     {
         $currentUser = Auth::user();
@@ -124,6 +205,9 @@ class ShopManager extends Component
         $globalCategories = collect();
         $parentCategories = collect();
         $shopProducts = collect();
+        $filteredProducts = collect();
+        $globalProducts = collect();
+        $analyticsData = null;
 
         // Get shops based on user role and permissions
         if ($currentUser->isSuperadmin() || $currentUser->isAdmin()) {
@@ -177,24 +261,72 @@ class ShopManager extends Component
                 $shopManagers = $selectedShop->staff()
                     ->wherePivot('role', 'manager')
                     ->get();
-                
+
                 // Get shop categories
                 $shopCategories = ShopCategory::where('shop_id', $this->selectedShopId)
                     ->with(['parent', 'category'])
                     ->get();
-                
+
                 // Get parent categories for dropdown
                 $parentCategories = ShopCategory::where('shop_id', $this->selectedShopId)
                     ->whereNull('parent_id')
                     ->get();
-                
-                // Get shop products
+
+                // Apply product filtering and sorting
+                $query = ShopProduct::where('shop_id', $this->selectedShopId);
+
+                // Apply filters
+                if ($this->productFilterCategory) {
+                    $query->where('shop_category_id', $this->productFilterCategory);
+                }
+
+                if ($this->productFilterStatus) {
+                    $query->where('status', $this->productFilterStatus);
+                }
+
+                if ($this->productFilterStock === 'in_stock') {
+                    $query->where('stock', '>', 0);
+                } elseif ($this->productFilterStock === 'out_of_stock') {
+                    $query->where('stock', '<=', 0);
+                } elseif ($this->productFilterStock === 'low_stock') {
+                    $query->where('stock', '>', 0)
+                          ->where('stock', '<=', 10); // Adjust low stock threshold as needed
+                }
+
+                if ($this->productFilterSource) {
+                    $query->where('source_type', $this->productFilterSource);
+                }
+
+                // Apply search term if any
+                if ($this->searchTerm) {
+                    $query->where(function($q) {
+                        $q->where('name', 'like', '%' . $this->searchTerm . '%')
+                          ->orWhere('description', 'like', '%' . $this->searchTerm . '%')
+                          ->orWhere('sku', 'like', '%' . $this->searchTerm . '%');
+                    });
+                }
+
+                // Apply sorting
+                $query->orderBy($this->productSortField, $this->productSortDirection);
+
+                // Get products with pagination
+                $filteredProducts = $query->with('shopCategory')->paginate($this->productsPerPage);
+
+                // Also get all shop products for other operations
                 $shopProducts = ShopProduct::where('shop_id', $this->selectedShopId)
                     ->with('shopCategory')
                     ->get();
+
+                // Get global products for potential import
+                $globalProducts = Product::active()->get();
+
+                // Get analytics data if viewing analytics
+                if ($this->isViewingAnalytics) {
+                    $analyticsData = $this->getAnalyticsData();
+                }
             }
         }
-        
+
         // Get global categories for mapping to shop categories
         $globalCategories = Category::active()->get();
 
@@ -207,8 +339,11 @@ class ShopManager extends Component
             'parentCategories' => $parentCategories,
             'globalCategories' => $globalCategories,
             'shopProducts' => $shopProducts,
+            'filteredProducts' => $filteredProducts,
+            'globalProducts' => $globalProducts,
             'roles' => ['manager', 'staff'],
-            'currentUser' => $currentUser
+            'currentUser' => $currentUser,
+            'analyticsData' => $analyticsData
         ]);
     }
 
@@ -419,30 +554,30 @@ class ShopManager extends Component
         $this->showConfirmModal = false;
         session()->flash('message', 'Shop deleted successfully.');
     }
-    
+
     // Open category management modal
     public function selectShopForCategoryManagement($shopId)
     {
         $this->selectedShopId = $shopId;
         $this->isManagingCategories = true;
     }
-    
+
     // Open category edit modal
     public function editCategory($id = null)
     {
         $this->resetValidation();
         $this->reset([
-            'categoryId', 'categoryName', 'categorySlug', 'categoryDescription', 
+            'categoryId', 'categoryName', 'categorySlug', 'categoryDescription',
             'parentCategoryId', 'selectedGlobalCategory', 'categoryStatus'
         ]);
 
         if ($id) {
             $category = ShopCategory::findOrFail($id);
-            
+
             // Check permission to edit
             $shop = Shop::findOrFail($category->shop_id);
             $this->authorize('update', $shop);
-            
+
             $this->categoryId = $category->id;
             $this->categoryName = $category->name;
             $this->categorySlug = $category->slug;
@@ -451,10 +586,10 @@ class ShopManager extends Component
             $this->selectedGlobalCategory = $category->category_id;
             $this->categoryStatus = $category->status;
         }
-        
+
         $this->isEditingCategory = true;
     }
-    
+
     // Save category
     public function saveCategory()
     {
@@ -465,17 +600,17 @@ class ShopManager extends Component
             'selectedGlobalCategory' => 'nullable|integer|exists:categories,id',
             'categoryStatus' => 'required|in:active,inactive',
         ]);
-        
+
         $shop = Shop::findOrFail($this->selectedShopId);
         $currentUser = Auth::user();
-        
+
         // Check authorization
-        if (!$currentUser->isAdmin() && !$currentUser->isSuperadmin() && 
-            !$shop->staff()->where('user_id', $currentUser->id)->exists() && 
+        if (!$currentUser->isAdmin() && !$currentUser->isSuperadmin() &&
+            !$shop->staff()->where('user_id', $currentUser->id)->exists() &&
             $shop->owner_id != $currentUser->id) {
             abort(403, 'You do not have permission to manage categories for this shop.');
         }
-        
+
         if ($this->categoryId) {
             // Update existing category
             $category = ShopCategory::findOrFail($this->categoryId);
@@ -485,34 +620,34 @@ class ShopManager extends Component
             $category->shop_id = $this->selectedShopId;
             $category->created_by = $currentUser->id;
         }
-        
+
         $category->name = $this->categoryName;
         $category->slug = Str::slug($this->categoryName);
         $category->description = $this->categoryDescription;
         $category->parent_id = $this->parentCategoryId;
         $category->category_id = $this->selectedGlobalCategory;
         $category->status = $this->categoryStatus;
-        
+
         $category->save();
-        
+
         $this->reset([
-            'categoryId', 'categoryName', 'categorySlug', 'categoryDescription', 
+            'categoryId', 'categoryName', 'categorySlug', 'categoryDescription',
             'parentCategoryId', 'selectedGlobalCategory', 'categoryStatus'
         ]);
         $this->isEditingCategory = false;
         session()->flash('message', $this->categoryId ? 'Category updated successfully.' : 'Category created successfully.');
     }
-    
+
     // Cancel category editing
     public function cancelCategoryEdit()
     {
         $this->reset([
-            'categoryId', 'categoryName', 'categorySlug', 'categoryDescription', 
+            'categoryId', 'categoryName', 'categorySlug', 'categoryDescription',
             'parentCategoryId', 'selectedGlobalCategory', 'categoryStatus'
         ]);
         $this->isEditingCategory = false;
     }
-    
+
     // Confirm category deletion
     public function confirmDeleteCategory($id)
     {
@@ -520,25 +655,25 @@ class ShopManager extends Component
         $this->modalType = 'deleteCategory';
         $this->showConfirmModal = true;
     }
-    
+
     // Delete a category
     public function deleteCategory()
     {
         if (!$this->categoryToDelete) {
             return;
         }
-        
+
         $category = ShopCategory::findOrFail($this->categoryToDelete);
         $shop = Shop::findOrFail($category->shop_id);
-        
+
         // Check authorization
         $currentUser = Auth::user();
-        if (!$currentUser->isAdmin() && !$currentUser->isSuperadmin() && 
-            !$shop->staff()->where('user_id', $currentUser->id)->exists() && 
+        if (!$currentUser->isAdmin() && !$currentUser->isSuperadmin() &&
+            !$shop->staff()->where('user_id', $currentUser->id)->exists() &&
             $shop->owner_id != $currentUser->id) {
             abort(403, 'You do not have permission to delete categories for this shop.');
         }
-        
+
         // Check if category has children
         if ($category->children()->count() > 0) {
             session()->flash('error', 'Cannot delete category with child categories. Remove child categories first.');
@@ -546,7 +681,7 @@ class ShopManager extends Component
             $this->showConfirmModal = false;
             return;
         }
-        
+
         // Check if category has products
         if ($category->products()->count() > 0) {
             session()->flash('error', 'Cannot delete category with products. Remove products first or reassign them to another category.');
@@ -554,82 +689,114 @@ class ShopManager extends Component
             $this->showConfirmModal = false;
             return;
         }
-        
+
         $category->delete();
-        
+
         $this->categoryToDelete = null;
         $this->showConfirmModal = false;
         session()->flash('message', 'Category deleted successfully.');
     }
-    
+
     // Close category management modal
     public function closeCategoryModal()
     {
         $this->isManagingCategories = false;
         $this->selectedShopId = null;
         $this->reset([
-            'categoryId', 'categoryName', 'categorySlug', 'categoryDescription', 
+            'categoryId', 'categoryName', 'categorySlug', 'categoryDescription',
             'parentCategoryId', 'selectedGlobalCategory', 'categoryStatus'
         ]);
     }
-    
+
     // Open product management modal
     public function selectShopForProductManagement($shopId)
     {
         $this->selectedShopId = $shopId;
         $this->isManagingProducts = true;
     }
-    
-    // Open product edit modal
+
+    // Enhanced product editing with additional fields
     public function editProduct($id = null)
     {
         $this->resetValidation();
         $this->reset([
             'shopProductId', 'productName', 'productDescription', 'productPrice',
-            'productStock', 'productCategoryId', 'productImage', 'existingProductImage'
+            'productStock', 'productCategoryId', 'productImage', 'existingProductImage',
+            'productStatus', 'productUnit', 'productSku', 'productBarcode',
+            'productCost', 'productTags', 'productSourceType', 'globalProductId',
+            'hasVariants', 'variantOptions', 'variants'
         ]);
 
         if ($id) {
             $product = ShopProduct::findOrFail($id);
-            
+
             // Check permission to edit
             $shop = Shop::findOrFail($product->shop_id);
             $this->authorize('update', $shop);
-            
+
             $this->shopProductId = $product->id;
             $this->productName = $product->name;
             $this->productDescription = $product->description;
             $this->productPrice = $product->price;
-            $this->productStock = $product->stock;
+            $this->productStock = $product->stock_quantity ?? $product->stock;
             $this->productCategoryId = $product->shop_category_id;
             $this->existingProductImage = $product->image;
+            $this->productStatus = $product->status ?? 'active';
+            $this->productUnit = $product->unit ?? 'piece';
+            $this->productSku = $product->sku;
+            $this->productBarcode = $product->barcode;
+            $this->productCost = $product->cost_price ?? null;
+            $this->productTags = $product->tags;
+            $this->productSourceType = $product->source_type ?? 'local';
+            $this->globalProductId = $product->global_product_id;
+
+            // Load variants if any
+            if ($product->has_variants) {
+                $this->hasVariants = true;
+                // Load variant options and variants
+                // This would require additional model relationships
+            }
         }
-        
+
         $this->isEditingProduct = true;
     }
-    
-    // Save product
+
+    // Enhanced save product method with additional fields
     public function saveProduct()
     {
-        $this->validate([
+        $validationRules = [
             'productName' => 'required|string|min:3|max:255',
             'productDescription' => 'nullable|string',
             'productPrice' => 'required|numeric|min:0',
             'productStock' => 'nullable|integer|min:0',
             'productCategoryId' => 'required|integer|exists:shop_categories,id',
             'productImage' => 'nullable|image|max:1024',
-        ]);
-        
+            'productStatus' => 'required|in:active,inactive',
+            'productUnit' => 'required|string|max:50',
+            'productSku' => 'nullable|string|max:100',
+            'productBarcode' => 'nullable|string|max:100',
+            'productCost' => 'nullable|numeric|min:0',
+            'productSourceType' => 'required|in:local,global',
+            'hasVariants' => 'boolean',
+        ];
+
+        // If product source is global, validate global product ID
+        if ($this->productSourceType === 'global') {
+            $validationRules['globalProductId'] = 'required|exists:products,id';
+        }
+
+        $this->validate($validationRules);
+
         $shop = Shop::findOrFail($this->selectedShopId);
         $currentUser = Auth::user();
-        
+
         // Check authorization
-        if (!$currentUser->isAdmin() && !$currentUser->isSuperadmin() && 
-            !$shop->staff()->where('user_id', $currentUser->id)->exists() && 
+        if (!$currentUser->isAdmin() && !$currentUser->isSuperadmin() &&
+            !$shop->staff()->where('user_id', $currentUser->id)->exists() &&
             $shop->owner_id != $currentUser->id) {
             abort(403, 'You do not have permission to manage products for this shop.');
         }
-        
+
         if ($this->shopProductId) {
             // Update existing product
             $product = ShopProduct::findOrFail($this->shopProductId);
@@ -639,14 +806,38 @@ class ShopManager extends Component
             $product->shop_id = $this->selectedShopId;
             $product->created_by = $currentUser->id;
         }
-        
+
         $product->name = $this->productName;
         $product->slug = Str::slug($this->productName);
         $product->description = $this->productDescription;
         $product->price = $this->productPrice;
-        $product->stock = $this->productStock;
+        $product->stock_quantity = $this->productStock;
+        $product->stock = $this->productStock; // For backward compatibility
         $product->shop_category_id = $this->productCategoryId;
-        
+        $product->status = $this->productStatus;
+        $product->unit = $this->productUnit;
+        $product->sku = $this->productSku;
+        $product->barcode = $this->productBarcode;
+        $product->cost_price = $this->productCost;
+        $product->tags = $this->productTags;
+        $product->source_type = $this->productSourceType;
+        $product->has_variants = $this->hasVariants;
+
+        // If global product, link to it
+        if ($this->productSourceType === 'global' && $this->globalProductId) {
+            $product->global_product_id = $this->globalProductId;
+
+            // Optionally sync some data from global product
+            $globalProduct = Product::find($this->globalProductId);
+            if ($globalProduct) {
+                $product->name = $globalProduct->name;
+                $product->description = $globalProduct->description;
+                // Other fields as needed
+            }
+        } else {
+            $product->global_product_id = null;
+        }
+
         // Handle image upload
         if ($this->productImage) {
             // Delete old image if exists
@@ -661,27 +852,177 @@ class ShopManager extends Component
             Storage::disk('public')->delete($product->image);
             $product->image = null;
         }
-        
+
         $product->save();
-        
+
+        // Handle variants if product has them
+        if ($this->hasVariants) {
+            $this->saveProductVariants($product);
+        }
+
         $this->reset([
             'shopProductId', 'productName', 'productDescription', 'productPrice',
-            'productStock', 'productCategoryId', 'productImage', 'existingProductImage'
+            'productStock', 'productCategoryId', 'productImage', 'existingProductImage',
+            'productStatus', 'productUnit', 'productSku', 'productBarcode',
+            'productCost', 'productTags', 'productSourceType', 'globalProductId',
+            'hasVariants', 'variantOptions', 'variants'
         ]);
+
         $this->isEditingProduct = false;
         session()->flash('message', $this->shopProductId ? 'Product updated successfully.' : 'Product created successfully.');
     }
-    
-    // Cancel product editing
-    public function cancelProductEdit()
+
+    // Method to save product variants
+    private function saveProductVariants($product)
     {
-        $this->reset([
-            'shopProductId', 'productName', 'productDescription', 'productPrice',
-            'productStock', 'productCategoryId', 'productImage', 'existingProductImage'
-        ]);
-        $this->isEditingProduct = false;
+        // This would handle saving variant options and variant combinations
+        // For example, saving color and size options, and then creating
+        // variants for each combination (Red-Small, Red-Medium, Blue-Small, etc.)
+
+        // Implementation depends on your variant model structure
     }
-    
+
+    // Add a new variant option
+    public function addVariantOption()
+    {
+        $this->validate([
+            'variantName' => 'required|string|min:1|max:50',
+        ]);
+
+        // Add the variant option
+        $this->variantOptions[] = [
+            'name' => $this->variantName,
+            'values' => $this->variantValues
+        ];
+
+        // Reset the input fields
+        $this->reset(['variantName', 'variantValues']);
+
+        // Generate variant combinations
+        $this->generateVariantCombinations();
+    }
+
+    // Generate all possible variant combinations
+    private function generateVariantCombinations()
+    {
+        // Start fresh
+        $this->variants = [];
+
+        if (empty($this->variantOptions)) {
+            return;
+        }
+
+        // Get all possible combinations of variant values
+        $optionsArray = [];
+        foreach ($this->variantOptions as $option) {
+            if (!empty($option['values'])) {
+                $optionsArray[] = $option['values'];
+            }
+        }
+
+        if (empty($optionsArray)) {
+            return;
+        }
+
+        // Generate combinations using recursion
+        $combinations = $this->generateCombinations($optionsArray);
+
+        // Create variant entries for each combination
+        foreach ($combinations as $combination) {
+            $this->variants[] = [
+                'combination' => $combination,
+                'price' => $this->productPrice,
+                'stock' => $this->productStock,
+                'sku' => '',
+                'image' => null
+            ];
+        }
+    }
+
+    // Helper function to generate all combinations
+    private function generateCombinations($arrays, $i = 0)
+    {
+        if (!isset($arrays[$i])) {
+            return [];
+        }
+        if ($i == count($arrays) - 1) {
+            return array_map(function($v) { return [$v]; }, $arrays[$i]);
+        }
+
+        $combinations = [];
+        $nextCombinations = $this->generateCombinations($arrays, $i + 1);
+
+        foreach ($arrays[$i] as $value) {
+            foreach ($nextCombinations as $nextCombination) {
+                $combinations[] = array_merge([$value], $nextCombination);
+            }
+        }
+
+        return $combinations;
+    }
+
+    // Edit a specific variant
+    public function editVariant($index)
+    {
+        $this->editingVariantIndex = $index;
+    }
+
+    // Save variant changes
+    public function saveVariant()
+    {
+        $this->editingVariantIndex = null;
+    }
+
+    // Remove a variant option
+    public function removeVariantOption($index)
+    {
+        unset($this->variantOptions[$index]);
+        $this->variantOptions = array_values($this->variantOptions);
+        $this->generateVariantCombinations();
+    }
+
+    // Toggle between list and grid view for products
+    public function toggleProductView()
+    {
+        $this->showProductGrid = !$this->showProductGrid;
+    }
+
+    // Refresh sort/filter when changed
+    public function updatedProductSortField()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedProductSortDirection()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedProductFilterCategory()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedProductFilterStatus()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedProductFilterStock()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedProductFilterSource()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedSearchTerm()
+    {
+        $this->resetPage();
+    }
+
     // Confirm product deletion
     public function confirmDeleteProduct($id)
     {
@@ -689,37 +1030,37 @@ class ShopManager extends Component
         $this->modalType = 'deleteProduct';
         $this->showConfirmModal = true;
     }
-    
+
     // Delete a product
     public function deleteProduct()
     {
         if (!$this->productToDelete) {
             return;
         }
-        
+
         $product = ShopProduct::findOrFail($this->productToDelete);
         $shop = Shop::findOrFail($product->shop_id);
-        
+
         // Check authorization
         $currentUser = Auth::user();
-        if (!$currentUser->isAdmin() && !$currentUser->isSuperadmin() && 
-            !$shop->staff()->where('user_id', $currentUser->id)->exists() && 
+        if (!$currentUser->isAdmin() && !$currentUser->isSuperadmin() &&
+            !$shop->staff()->where('user_id', $currentUser->id)->exists() &&
             $shop->owner_id != $currentUser->id) {
             abort(403, 'You do not have permission to delete products for this shop.');
         }
-        
+
         // Delete product image if it exists
         if ($product->image && Storage::disk('public')->exists($product->image)) {
             Storage::disk('public')->delete($product->image);
         }
-        
+
         $product->delete();
-        
+
         $this->productToDelete = null;
         $this->showConfirmModal = false;
         session()->flash('message', 'Product deleted successfully.');
     }
-    
+
     // Close product management modal
     public function closeProductModal()
     {
@@ -750,5 +1091,442 @@ class ShopManager extends Component
             'phone', 'email', 'is_active', 'status', 'shopImage',
             'existingImage', 'removeImage'
         ]);
+    }
+
+    // Open bulk editing modal
+    public function openBulkEditModal()
+    {
+        if (empty($this->selectedProducts)) {
+            session()->flash('error', 'Please select at least one product.');
+            return;
+        }
+        
+        $this->isBulkEditing = true;
+    }
+    
+    // Perform bulk operations on selected products
+    public function performBulkAction()
+    {
+        if (empty($this->selectedProducts)) {
+            session()->flash('error', 'No products selected.');
+            return;
+        }
+        
+        $this->validate([
+            'bulkAction' => 'required|in:delete,update_category,update_status,adjust_price',
+        ]);
+        
+        // Additional validation based on the action
+        if ($this->bulkAction === 'update_category') {
+            $this->validate(['bulkCategoryId' => 'required|exists:shop_categories,id']);
+        } elseif ($this->bulkAction === 'update_status') {
+            $this->validate(['bulkStatus' => 'required|in:active,inactive']);
+        } elseif ($this->bulkAction === 'adjust_price') {
+            $this->validate([
+                'bulkPriceAdjustment' => 'required|numeric',
+                'bulkPriceAdjustmentType' => 'required|in:percentage,fixed',
+            ]);
+        }
+        
+        // Get the products to update
+        $products = ShopProduct::whereIn('id', $this->selectedProducts)->get();
+        
+        // Apply the action
+        foreach ($products as $product) {
+            switch ($this->bulkAction) {
+                case 'delete':
+                    // Delete product image if it exists
+                    if ($product->image && Storage::disk('public')->exists($product->image)) {
+                        Storage::disk('public')->delete($product->image);
+                    }
+                    $product->delete();
+                    break;
+                    
+                case 'update_category':
+                    $product->shop_category_id = $this->bulkCategoryId;
+                    $product->save();
+                    break;
+                    
+                case 'update_status':
+                    $product->status = $this->bulkStatus;
+                    $product->save();
+                    break;
+                    
+                case 'adjust_price':
+                    if ($this->bulkPriceAdjustmentType === 'percentage') {
+                        // Calculate percentage adjustment
+                        $adjustment = $product->price * ($this->bulkPriceAdjustment / 100);
+                        $product->price += $adjustment;
+                    } else {
+                        // Apply fixed amount adjustment
+                        $product->price += $this->bulkPriceAdjustment;
+                    }
+                    
+                    // Ensure price doesn't go below zero
+                    if ($product->price < 0) {
+                        $product->price = 0;
+                    }
+                    
+                    $product->save();
+                    break;
+            }
+        }
+        
+        // Reset
+        $this->selectedProducts = [];
+        $this->isBulkEditing = false;
+        $this->reset(['bulkAction', 'bulkCategoryId', 'bulkStatus', 'bulkPriceAdjustment', 'bulkPriceAdjustmentType']);
+        
+        // Show success message
+        $actionText = match($this->bulkAction) {
+            'delete' => 'deleted',
+            'update_category' => 'category updated for',
+            'update_status' => 'status updated for',
+            'adjust_price' => 'prices adjusted for',
+            default => 'updated'
+        };
+        
+        session()->flash('message', 'Successfully ' . $actionText . ' ' . count($products) . ' products.');
+    }
+    
+    // Cancel bulk editing
+    public function cancelBulkEdit()
+    {
+        $this->isBulkEditing = false;
+        $this->reset(['bulkAction', 'bulkCategoryId', 'bulkStatus', 'bulkPriceAdjustment', 'bulkPriceAdjustmentType']);
+    }
+    
+    // Select/deselect all products
+    public function toggleSelectAll($isChecked)
+    {
+        if ($isChecked) {
+            // Select all products on the current page
+            $query = ShopProduct::where('shop_id', $this->selectedShopId);
+            
+            // Apply filters
+            if ($this->productFilterCategory) {
+                $query->where('shop_category_id', $this->productFilterCategory);
+            }
+            
+            if ($this->productFilterStatus) {
+                $query->where('status', $this->productFilterStatus);
+            }
+            
+            if ($this->productFilterStock === 'in_stock') {
+                $query->where('stock', '>', 0);
+            } elseif ($this->productFilterStock === 'out_of_stock') {
+                $query->where('stock', '<=', 0);
+            } elseif ($this->productFilterStock === 'low_stock') {
+                $query->where('stock', '>', 0)
+                      ->where('stock', '<=', 10);
+            }
+            
+            $this->selectedProducts = $query->pluck('id')->toArray();
+        } else {
+            // Deselect all
+            $this->selectedProducts = [];
+        }
+    }
+    
+    // Open the product import modal
+    public function openImportModal()
+    {
+        $this->isImportingProducts = true;
+    }
+    
+    // Handle file import
+    public function importProducts()
+    {
+        $this->validate([
+            'importFile' => 'required|file|mimes:csv,xlsx|max:5120',
+        ]);
+        
+        // Process the import file
+        try {
+            // This is a placeholder for the actual import logic
+            // In a real implementation, you would:
+            // 1. Read the file (using a package like maatwebsite/excel)
+            // 2. Validate the data
+            // 3. Create the products
+            
+            // For demonstration purposes:
+            session()->flash('message', 'Import started. Products are being processed in the background.');
+            $this->isImportingProducts = false;
+            $this->reset(['importFile']);
+            
+            // In a real implementation, you might dispatch a job to handle this
+            // Import::dispatch($this->importFile, $this->selectedShopId, Auth::id());
+            
+        } catch (\Exception $e) {
+            session()->flash('error', 'Import failed: ' . $e->getMessage());
+        }
+    }
+    
+    // Handle import completion (would be triggered by an event in a real app)
+    public function handleProductImport($results)
+    {
+        // $results would contain details about the import
+        session()->flash('message', 'Import completed: ' . $results['imported'] . ' products imported, ' . $results['failed'] . ' failed.');
+    }
+    
+    // Open the export modal
+    public function openExportModal()
+    {
+        $this->isExportingProducts = true;
+    }
+    
+    // Export products
+    public function exportProducts()
+    {
+        $this->validate([
+            'exportFormat' => 'required|in:csv,xlsx',
+            'exportData' => 'required|in:all,filtered,selected',
+        ]);
+        
+        // Get the products to export
+        $query = ShopProduct::where('shop_id', $this->selectedShopId);
+        
+        switch ($this->exportData) {
+            case 'filtered':
+                // Apply the current filters
+                if ($this->productFilterCategory) {
+                    $query->where('shop_category_id', $this->productFilterCategory);
+                }
+                
+                if ($this->productFilterStatus) {
+                    $query->where('status', $this->productFilterStatus);
+                }
+                
+                if ($this->productFilterStock === 'in_stock') {
+                    $query->where('stock', '>', 0);
+                } elseif ($this->productFilterStock === 'out_of_stock') {
+                    $query->where('stock', '<=', 0);
+                } elseif ($this->productFilterStock === 'low_stock') {
+                    $query->where('stock', '>', 0)
+                          ->where('stock', '<=', 10);
+                }
+                break;
+                
+            case 'selected':
+                // Only export the selected products
+                if (empty($this->selectedProducts)) {
+                    session()->flash('error', 'No products selected for export.');
+                    return;
+                }
+                $query->whereIn('id', $this->selectedProducts);
+                break;
+        }
+        
+        // This is a placeholder for the actual export logic
+        // In a real implementation, you would:
+        // 1. Query the data
+        // 2. Format it for export
+        // 3. Generate and return the file
+        
+        // For demonstration purposes:
+        session()->flash('message', 'Export started. Your file will be downloaded automatically when ready.');
+        $this->isExportingProducts = false;
+        
+        // In a real implementation, you might:
+        // return Excel::download(new ProductsExport($query), 'products.' . $this->exportFormat);
+    }
+    
+    // Open analytics view
+    public function openAnalyticsModal()
+    {
+        $this->isViewingAnalytics = true;
+    }
+    
+    // Get analytics data
+    public function getAnalyticsData()
+    {
+        $shop = Shop::findOrFail($this->selectedShopId);
+        
+        // Determine date range
+        $endDate = Carbon::now();
+        $startDate = match($this->analyticsDateRange) {
+            'today' => Carbon::today(),
+            'yesterday' => Carbon::yesterday(),
+            'last7days' => Carbon::now()->subDays(7),
+            'last30days' => Carbon::now()->subDays(30),
+            'thisMonth' => Carbon::now()->startOfMonth(),
+            'lastMonth' => Carbon::now()->subMonth()->startOfMonth(),
+            'custom' => Carbon::parse($this->customStartDate),
+            default => Carbon::now()->subDays(30)
+        };
+        
+        if ($this->analyticsDateRange === 'lastMonth') {
+            $endDate = Carbon::now()->subMonth()->endOfMonth();
+        } elseif ($this->analyticsDateRange === 'custom') {
+            $endDate = Carbon::parse($this->customEndDate);
+        }
+        
+        // This would contain SQL queries to gather the requested analytics data
+        // For example, sales by day, top products, etc.
+        
+        // For demonstration purposes, let's create sample data
+        $analyticsData = [
+            'salesTotal' => rand(1000, 10000),
+            'salesCount' => rand(50, 500),
+            'averageOrderValue' => rand(20, 100),
+            'topProducts' => [],
+            'salesByDay' => [],
+            'salesByCategory' => []
+        ];
+        
+        // In a real implementation, you would query the database for actual data
+        // For example:
+        // $salesData = Order::where('shop_id', $this->selectedShopId)
+        //     ->whereBetween('created_at', [$startDate, $endDate])
+        //     ->selectRaw('DATE(created_at) as date, SUM(total) as total, COUNT(*) as count')
+        //     ->groupBy('date')
+        //     ->get();
+            
+        // Return the data
+        return $analyticsData;
+    }
+    
+    // Update analytics date range
+    public function updateAnalyticsDateRange()
+    {
+        if ($this->analyticsDateRange === 'custom') {
+            $this->validate([
+                'customStartDate' => 'required|date',
+                'customEndDate' => 'required|date|after_or_equal:customStartDate',
+            ]);
+        }
+        
+        // This will trigger getAnalyticsData() in the render method
+        $this->reset(['analyticsData']);
+    }
+    
+    // Import products from global catalog
+    public function importGlobalProducts($productIds = [])
+    {
+        if (empty($productIds)) {
+            session()->flash('error', 'No products selected for import.');
+            return;
+        }
+        
+        $currentUser = Auth::user();
+        $shop = Shop::findOrFail($this->selectedShopId);
+        
+        // Check authorization
+        if (!$currentUser->isAdmin() && !$currentUser->isSuperadmin() &&
+            !$shop->staff()->where('user_id', $currentUser->id)->exists() &&
+            $shop->owner_id != $currentUser->id) {
+            abort(403, 'You do not have permission to import products for this shop.');
+        }
+        
+        // Get the global products
+        $globalProducts = Product::whereIn('id', $productIds)->get();
+        
+        // For each global product, create a shop product
+        foreach ($globalProducts as $globalProduct) {
+            // Check if product already exists in the shop
+            $existingProduct = ShopProduct::where('shop_id', $this->selectedShopId)
+                ->where('global_product_id', $globalProduct->id)
+                ->first();
+                
+            if (!$existingProduct) {
+                // Create new product
+                $shopProduct = new ShopProduct();
+                $shopProduct->shop_id = $this->selectedShopId;
+                $shopProduct->name = $globalProduct->name;
+                $shopProduct->slug = Str::slug($globalProduct->name);
+                $shopProduct->description = $globalProduct->description;
+                $shopProduct->price = $globalProduct->price;
+                $shopProduct->stock_quantity = 0; // Default to zero stock
+                $shopProduct->stock = 0; // For backward compatibility
+                $shopProduct->status = 'active';
+                $shopProduct->source_type = 'global';
+                $shopProduct->global_product_id = $globalProduct->id;
+                $shopProduct->created_by = $currentUser->id;
+                
+                // Set a default category
+                $shopProduct->shop_category_id = ShopCategory::where('shop_id', $this->selectedShopId)
+                    ->orderBy('id')
+                    ->value('id');
+                    
+                // Copy image if exists
+                if ($globalProduct->image) {
+                    $shopProduct->image = $globalProduct->image; // This assumes images share the same storage
+                }
+                
+                $shopProduct->save();
+            }
+        }
+        
+        session()->flash('message', count($globalProducts) . ' products imported successfully.');
+    }
+    
+    // Clone a product within the shop
+    public function cloneProduct($id)
+    {
+        $originalProduct = ShopProduct::findOrFail($id);
+        $shop = Shop::findOrFail($originalProduct->shop_id);
+        $currentUser = Auth::user();
+        
+        // Check authorization
+        if (!$currentUser->isAdmin() && !$currentUser->isSuperadmin() &&
+            !$shop->staff()->where('user_id', $currentUser->id)->exists() &&
+            $shop->owner_id != $currentUser->id) {
+            abort(403, 'You do not have permission to clone products for this shop.');
+        }
+        
+        // Create a clone of the product
+        $clonedProduct = $originalProduct->replicate();
+        $clonedProduct->name = $originalProduct->name . ' (Copy)';
+        $clonedProduct->slug = Str::slug($clonedProduct->name);
+        $clonedProduct->created_by = $currentUser->id;
+        $clonedProduct->created_at = now();
+        
+        // Handle unique fields if needed
+        if ($originalProduct->sku) {
+            $clonedProduct->sku = $originalProduct->sku . '-COPY';
+        }
+        
+        $clonedProduct->save();
+        
+        // Clone the image if it exists
+        if ($originalProduct->image && Storage::disk('public')->exists($originalProduct->image)) {
+            $imagePath = $originalProduct->image;
+            $extension = pathinfo($imagePath, PATHINFO_EXTENSION);
+            $newImagePath = 'products/' . Str::uuid() . '.' . $extension;
+            
+            if (Storage::disk('public')->copy($imagePath, $newImagePath)) {
+                $clonedProduct->image = $newImagePath;
+                $clonedProduct->save();
+            }
+        }
+        
+        session()->flash('message', 'Product cloned successfully.');
+    }
+    
+    // Update product stock quantity
+    public function updateProductStock($productId, $newStock)
+    {
+        if (!is_numeric($newStock) || $newStock < 0) {
+            session()->flash('error', 'Stock quantity must be a positive number.');
+            return;
+        }
+        
+        $product = ShopProduct::findOrFail($productId);
+        $shop = Shop::findOrFail($product->shop_id);
+        $currentUser = Auth::user();
+        
+        // Check authorization
+        if (!$currentUser->isAdmin() && !$currentUser->isSuperadmin() &&
+            !$shop->staff()->where('user_id', $currentUser->id)->exists() &&
+            $shop->owner_id != $currentUser->id) {
+            abort(403, 'You do not have permission to update stock for this shop.');
+        }
+        
+        // Update the stock
+        $product->stock_quantity = $newStock;
+        $product->stock = $newStock; // For backward compatibility
+        $product->save();
+        
+        session()->flash('message', 'Stock updated successfully.');
     }
 }

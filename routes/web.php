@@ -7,6 +7,7 @@ use App\Livewire\Shop\ShopCategoryManager;
 use App\Livewire\Shop\ShopProductManager;
 use App\Livewire\Shop\ShopManager;
 use App\Http\Controllers\ShopController;
+use App\Livewire\Marketplace\MarketplaceLanding;
 // Removed AdminDashboard import as it doesn't exist
 
 Route::view('/', 'welcome');
@@ -53,9 +54,12 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Shop Marketplace Routes
-Route::get('/marketplace', ShopMarketplace::class)->name('marketplace');
+Route::get('/marketplace', [ShopController::class, 'index'])->name('marketplace');
 Route::get('/shop/{slug}', [ShopController::class, 'show'])->name('shop.show');
 Route::get('/shop/{shopSlug}/product/{productSlug}', [ShopController::class, 'showProduct'])->name('shop.product.show');
+
+// New Marketplace Landing Page
+Route::get('/marketplace/landing', MarketplaceLanding::class)->name('marketplace.landing');
 
 // Shop Management Routes (Protected)
 Route::middleware(['auth'])->group(function () {

@@ -35,7 +35,7 @@ class Dashboard extends Component
     public $removePhoto = false; // Flag to remove the current photo
     public $oldPhoto;
     public $searchTerm = '';
-    
+
     // Shop detail properties
     public $selectedShopId = null;
     public $shopDetailView = 'overview'; // overview, inventory, categories, sales, manager
@@ -140,7 +140,7 @@ class Dashboard extends Component
         $totalProducts = 0;
         $pendingShops = 0;
         $productSuggestions = 0;
-        
+
         // Initialize shop metrics
         $userShopCount = 0;
         $userShopProducts = 0;
@@ -149,10 +149,6 @@ class Dashboard extends Component
         $recentShopActivities = collect();
         $shopSales = [];
         $shopVisits = 0;
-        
-        // Initialize shop details data
-        $userShops = collect();
-        $selectedShop = null;
 
         // Build user-specific data based on the active tab
         switch ($this->activeTab) {
@@ -169,28 +165,27 @@ class Dashboard extends Component
                     $totalProducts = Product::where('is_global', true)->count();
                     $pendingShops = Shop::where('status', 'pending')->count();
                     $productSuggestions = Product::where('global_suggestion', true)->count();
-                    
+
                     // Get overall shop metrics for superadmin
                     $userShopCount = Shop::count();
                     $userActiveShops = Shop::where('status', 'active')->count();
                     $userShopProducts = ShopProduct::count();
-                    
+
                     // Get recent shop activities
                     $recentShopActivities = Shop::with('owner')
                         ->latest()
                         ->take(5)
                         ->get();
-                        
+
                     // Calculate shop metrics for the last 30 days (mockup data)
-                    // In a real application, this would be connected to your sales/analytics data
                     $shopSales = [
                         'total' => Shop::count() * rand(1000, 5000),
                         'growth' => rand(5, 25),
                         'period' => '30 days'
                     ];
-                    
+
                     $shopVisits = Shop::count() * rand(500, 2000);
-                    
+
                 } elseif ($currentUser->isAdmin()) {
                     // Admin only sees users they created
                     $totalUsers = User::where('created_by', $currentUser->id)->count();
@@ -210,34 +205,34 @@ class Dashboard extends Component
                     $totalProducts = Product::where('is_global', true)->count();
                     $pendingShops = Shop::where('status', 'pending')->count();
                     $productSuggestions = Product::where('global_suggestion', true)->count();
-                    
+
                     // Get shop metrics for admin view
                     $userShopCount = Shop::count();
                     $userActiveShops = Shop::where('status', 'active')->count();
                     $userShopProducts = ShopProduct::count();
-                    
+
                     // Get recent shop activities
                     $recentShopActivities = Shop::with('owner')
                         ->latest()
                         ->take(5)
                         ->get();
-                    
+
                     // Calculate shop metrics for the last 30 days (mockup data)
                     $shopSales = [
                         'total' => Shop::count() * rand(800, 4000),
                         'growth' => rand(5, 25),
                         'period' => '30 days'
                     ];
-                    
+
                     $shopVisits = Shop::count() * rand(400, 1800);
-                    
+
                 } elseif ($currentUser->isManager()) {
                     // Manager sees only relevant information
                     $userActivity = User::where('role_id', 4) // normal users
                         ->latest()
                         ->take(5)
                         ->get();
-                    
+
                     // Get shop metrics for managers
                     $userShopCount = Shop::where('owner_id', $currentUser->id)->count();
                     $userShopProducts = ShopProduct::whereHas('shop', function($query) use ($currentUser) {
@@ -246,27 +241,27 @@ class Dashboard extends Component
                     $userActiveShops = Shop::where('owner_id', $currentUser->id)
                         ->where('status', 'active')
                         ->count();
-                    
+
                     // Get top selling products (mock data for now)
                     $topSellingProducts = ShopProduct::whereHas('shop', function($query) use ($currentUser) {
                         $query->where('owner_id', $currentUser->id);
                     })
                     ->take(5)
                     ->get();
-                    
+
                     // Calculate shop metrics for manager's shops (mockup data)
                     $shopSales = [
                         'total' => $userShopCount * rand(500, 2000),
                         'growth' => rand(3, 20),
                         'period' => '30 days'
                     ];
-                    
+
                     $shopVisits = $userShopCount * rand(200, 1000);
-                    
+
                 } else {
                     // Regular user just sees their own data
                     $userActivity = collect([$currentUser]);
-                    
+
                     // Get shop metrics if the user has any shops
                     $userShopCount = Shop::where('owner_id', $currentUser->id)->count();
                     $userShopProducts = ShopProduct::whereHas('shop', function($query) use ($currentUser) {
@@ -275,15 +270,15 @@ class Dashboard extends Component
                     $userActiveShops = Shop::where('owner_id', $currentUser->id)
                         ->where('status', 'active')
                         ->count();
-                    
-                    // Calculate shop metrics for user's shops (mockup data) 
+
+                    // Calculate shop metrics for user's shops (mockup data)
                     if ($userShopCount > 0) {
                         $shopSales = [
                             'total' => $userShopCount * rand(200, 1000),
                             'growth' => rand(1, 15),
                             'period' => '30 days'
                         ];
-                        
+
                         $shopVisits = $userShopCount * rand(100, 500);
                     }
                 }
@@ -349,29 +344,6 @@ class Dashboard extends Component
                 // Shop approvals tab is handled by the Livewire component
                 break;
 
-            case 'shop_details':
-                // Get user's shops for selection
-                if ($currentUser->isSuperadmin() || $currentUser->isAdmin()) {
-                    // Admins can see all shops
-                    $userShops = Shop::with('owner')->get();
-                } else {
-                    // Regular users see only their shops
-                    $userShops = Shop::where('owner_id', $currentUser->id)->get();
-                }
-                
-                // If a shop is selected, get its details
-                if ($this->selectedShopId) {
-                    $selectedShop = Shop::with('owner')->findOrFail($this->selectedShopId);
-                    
-                    // Load additional details based on the selected view
-                    if ($this->shopDetailView === 'inventory' && empty($this->productsByCategory)) {
-                        $this->loadShopInventory();
-                    } elseif ($this->shopDetailView === 'categories' && empty($this->shopCategories)) {
-                        $this->loadShopCategories();
-                    }
-                }
-                break;
-
             case 'product_suggestions':
                 // Product suggestions tab is handled by the Livewire component
                 break;
@@ -384,12 +356,21 @@ class Dashboard extends Component
         // Get filtered roles based on user's permissions
         $roles = $this->getAvailableRoles();
 
-        // Build navigation tabs based on user role
-        $tabs = [
-            'overview' => [
-                'name' => 'Overview',
-                'icon' => 'home'
-            ]
+        // Build navigation tabs based on user role - prioritizing Shop Details
+        $tabs = [];
+        
+        // Add shop details tab at the top for shop owners and admins
+        if ($currentUser->isManager() || $currentUser->isAdmin() || $currentUser->isSuperadmin()) {
+            $tabs['shop_details'] = [
+                'name' => 'Shop Details',
+                'icon' => 'store-alt'
+            ];
+        }
+        
+        // Now add overview tab
+        $tabs['overview'] = [
+            'name' => 'Overview',
+            'icon' => 'home'
         ];
 
         // Add user management for admins and superadmins
@@ -454,14 +435,6 @@ class Dashboard extends Component
             'icon' => 'logout'
         ];
 
-        // Add shop details tab for shop owners and admins
-        if ($currentUser->isManager() || $currentUser->isAdmin() || $currentUser->isSuperadmin()) {
-            $tabs['shop_details'] = [
-                'name' => 'Shop Details',
-                'icon' => 'store-alt'
-            ];
-        }
-
         return view('livewire.dashboard', [
             'currentUser' => $currentUser,
             'totalUsers' => $totalUsers,
@@ -487,14 +460,7 @@ class Dashboard extends Component
             'topSellingProducts' => $topSellingProducts,
             'recentShopActivities' => $recentShopActivities,
             'shopSales' => $shopSales,
-            'shopVisits' => $shopVisits,
-            // Shop details data
-            'userShops' => $userShops,
-            'selectedShop' => $selectedShop,
-            'shopDetailView' => $this->shopDetailView,
-            'productsByCategory' => $this->productsByCategory,
-            'shopCategories' => $this->shopCategories,
-            'selectedCategoryId' => $this->selectedCategoryId
+            'shopVisits' => $shopVisits
         ]);
     }
 
@@ -777,21 +743,21 @@ class Dashboard extends Component
         $this->shopCategories = [];
         $this->selectedCategoryId = null;
     }
-    
+
     /**
      * Set the shop details view (summary, inventory, categories)
      */
     public function setShopDetailView($view)
     {
         $this->shopDetailView = $view;
-        
+
         if ($view === 'inventory' && empty($this->productsByCategory)) {
             $this->loadShopInventory();
         } elseif ($view === 'categories' && empty($this->shopCategories)) {
             $this->loadShopCategories();
         }
     }
-    
+
     /**
      * Load details for the selected shop
      */
@@ -800,26 +766,26 @@ class Dashboard extends Component
         if (!$this->selectedShopId) {
             return;
         }
-        
+
         // Load basic shop information
         $shop = Shop::with('owner')->findOrFail($this->selectedShopId);
-        
+
         // Load summary data
         $this->shopProducts = ShopProduct::where('shop_id', $this->selectedShopId)
             ->count();
         $this->shopCategories = ShopCategory::where('shop_id', $this->selectedShopId)
             ->count();
-        
+
         // Load sample shop statistics (replace with actual implementation)
         $this->shopSales = [
             'total' => rand(500, 5000),
             'growth' => rand(5, 25),
             'period' => 'Last 30 days'
         ];
-        
+
         $this->shopVisits = rand(100, 1000);
     }
-    
+
     /**
      * Load shop inventory with category grouping
      */
@@ -828,7 +794,7 @@ class Dashboard extends Component
         if (!$this->selectedShopId) {
             return;
         }
-        
+
         // Get all categories that have products in this shop
         $shopCategories = ShopProduct::where('shop_products.shop_id', $this->selectedShopId)
             ->join('products', 'shop_products.global_product_id', '=', 'products.id')
@@ -837,10 +803,10 @@ class Dashboard extends Component
             ->distinct()
             ->orderBy('categories.name')
             ->get();
-            
+
         // Group products by category
         $this->productsByCategory = [];
-        
+
         foreach ($shopCategories as $category) {
             $products = ShopProduct::where('shop_products.shop_id', $this->selectedShopId)
                 ->join('products', 'shop_products.global_product_id', '=', 'products.id')
@@ -856,20 +822,20 @@ class Dashboard extends Component
                 )
                 ->orderBy('products.name')
                 ->get();
-                
+
             $this->productsByCategory[$category->id] = [
                 'category_name' => $category->name,
                 'products' => $products
             ];
         }
-        
+
         if (!empty($this->productsByCategory)) {
             // Set the first category as selected by default
             $firstCategory = array_key_first($this->productsByCategory);
             $this->selectedCategoryId = $firstCategory;
         }
     }
-    
+
     /**
      * Load shop categories with product counts
      */
@@ -878,17 +844,17 @@ class Dashboard extends Component
         if (!$this->selectedShopId) {
             return;
         }
-        
+
         // Get all shop categories
         $shopCategories = ShopCategory::where('shop_id', $this->selectedShopId)
             ->orderBy('parent_id', 'asc')
             ->orderBy('name', 'asc')
             ->get();
-            
+
         // Create hierarchical structure
         $categoryTree = [];
         $categoriesById = [];
-        
+
         // First pass: index all categories by ID
         foreach ($shopCategories as $category) {
             $categoriesById[$category->id] = [
@@ -901,7 +867,7 @@ class Dashboard extends Component
                 'product_count' => 0
             ];
         }
-        
+
         // Second pass: count products in each category
         foreach ($categoriesById as $id => $categoryData) {
             // Count products directly in this category
@@ -909,10 +875,10 @@ class Dashboard extends Component
                 ->join('products', 'shop_products.product_id', '=', 'products.id')
                 ->where('products.category_id', $id)
                 ->count();
-                
+
             $categoriesById[$id]['product_count'] = $productCount;
         }
-        
+
         // Third pass: build the tree structure
         foreach ($categoriesById as $id => $categoryData) {
             if (!$categoryData['parent_id']) {
@@ -925,16 +891,16 @@ class Dashboard extends Component
                 }
             }
         }
-        
+
         $this->shopCategories = $categoryTree;
-        
+
         if (!empty($this->shopCategories)) {
             // Set the first category as selected by default
             $firstCategory = array_key_first($this->shopCategories);
             $this->selectedCategoryId = $firstCategory;
         }
     }
-    
+
     /**
      * Select a category to view its products
      */
@@ -943,7 +909,7 @@ class Dashboard extends Component
         $this->selectedCategoryId = $categoryId;
         $this->loadCategoryProducts($categoryId);
     }
-    
+
     /**
      * Load products for a specific category
      */
@@ -952,7 +918,7 @@ class Dashboard extends Component
         if (!$this->selectedShopId || !$categoryId) {
             return;
         }
-        
+
         $this->categoryProducts = ShopProduct::where('shop_id', $this->selectedShopId)
             ->join('products', 'shop_products.product_id', '=', 'products.id')
             ->where('products.category_id', $categoryId)
@@ -977,11 +943,11 @@ class Dashboard extends Component
         if ($shopId) {
             $this->selectedShopId = $shopId;
         }
-        
+
         $this->shopDetailView = 'manager';
         $this->showShopManager = true;
     }
-    
+
     /**
      * Close shop manager view and return to overview
      */

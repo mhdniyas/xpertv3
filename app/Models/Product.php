@@ -15,6 +15,9 @@ class Product extends Model
         'slug',
         'description',
         'price',
+        'rating',
+        'stock',
+        'is_featured',
         'category_id',
         'shop_id',
         'is_global',
@@ -27,8 +30,10 @@ class Product extends Model
     protected $casts = [
         'is_global' => 'boolean',
         'is_active' => 'boolean',
+        'is_featured' => 'boolean',
         'global_suggestion' => 'boolean',
         'price' => 'decimal:2',
+        'rating' => 'decimal:2',
     ];
 
     /**
@@ -115,5 +120,13 @@ class Product extends Model
     public function scopeByStatus($query, $status)
     {
         return $query->where('status', $status);
+    }
+
+    /**
+     * Scope a query to only include featured products.
+     */
+    public function scopeFeatured($query)
+    {
+        return $query->where('is_featured', true);
     }
 }
