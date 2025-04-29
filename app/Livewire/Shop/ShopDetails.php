@@ -19,12 +19,29 @@ class ShopDetails extends Component
 
     // Shop detail properties
     public $selectedShopId = null;
-    public $shopDetailView = 'overview'; // overview, inventory, categories, sales, manager
+    public $shopDetailView = 'overview'; // overview, inventory, categories, sales, staff, manager
     public $productsByCategory = [];
     public $shopCategories = [];
     public $selectedCategoryId = null;
     public $showShopManager = false;
     public $searchTerm = '';
+
+    // For staff management
+    public $selectedUserId;
+    public $selectedRole = 'staff';
+    public $staffMembers = [];
+    public $users = [];
+    public $roles = ['staff', 'manager'];
+    public $staffToRemove = null;
+
+    // Product form properties
+    public $productName;
+    public $productDescription;
+    public $productPrice;
+    public $productStock = 0;
+    public $productCategoryId;
+    public $productStatus = 'active';
+    public $productUnit = 'piece';
 
     // Shop statistics
     public $shopProducts;
@@ -74,6 +91,9 @@ class ShopDetails extends Component
                 $this->loadShopInventory();
             } elseif ($this->shopDetailView === 'categories' && empty($this->shopCategories)) {
                 $this->loadShopCategories();
+            } elseif ($this->shopDetailView === 'staff' && empty($this->staffMembers)) {
+                $this->loadStaffMembers();
+                $this->loadAvailableUsers();
             }
         }
 
@@ -84,7 +104,10 @@ class ShopDetails extends Component
             'shopDetailView' => $this->shopDetailView,
             'productsByCategory' => $this->productsByCategory,
             'shopCategories' => $this->shopCategories,
-            'selectedCategoryId' => $this->selectedCategoryId
+            'selectedCategoryId' => $this->selectedCategoryId,
+            'staffMembers' => $this->staffMembers,
+            'users' => $this->users,
+            'roles' => $this->roles
         ]);
     }
 
@@ -112,6 +135,9 @@ class ShopDetails extends Component
             $this->loadShopInventory();
         } elseif ($view === 'categories' && empty($this->shopCategories)) {
             $this->loadShopCategories();
+        } elseif ($view === 'staff') {
+            $this->loadStaffMembers();
+            $this->loadAvailableUsers();
         }
     }
 
@@ -152,38 +178,39 @@ class ShopDetails extends Component
             return;
         }
 
-        // Get all categories that have products in this shop
-        $shopCategories = ShopProduct::where('shop_products.shop_id', $this->selectedShopId)
-            ->join('products', 'shop_products.global_product_id', '=', 'products.id')
-            ->join('categories', 'products.category_id', '=', 'categories.id')
-            ->select('categories.id', 'categories.name')
-            ->distinct()
-            ->orderBy('categories.name')
+        // Get shop categories with products
+        $shopCategories = ShopCategory::where('shop_id', $this->selectedShopId)
+            ->where('status', 'active')
+            ->orderBy('name')
             ->get();
 
         // Group products by category
         $this->productsByCategory = [];
 
         foreach ($shopCategories as $category) {
+            // Get products in this category
             $products = ShopProduct::where('shop_products.shop_id', $this->selectedShopId)
-                ->join('products', 'shop_products.global_product_id', '=', 'products.id')
-                ->where('products.category_id', $category->id)
+                ->where('shop_products.shop_category_id', $category->id)
                 ->select(
                     'shop_products.id',
+                    'shop_products.name',
+                    'shop_products.description', // Now including the description field
                     'shop_products.global_product_id',
-                    'products.name',
-                    'products.description',
                     'shop_products.price',
                     'shop_products.stock_quantity as stock',
-                    'shop_products.status'
+                    'shop_products.status',
+                    'shop_products.source_type'
                 )
-                ->orderBy('products.name')
+                ->orderBy('shop_products.name')
                 ->get();
 
-            $this->productsByCategory[$category->id] = [
-                'category_name' => $category->name,
-                'products' => $products
-            ];
+            // Only add category if it has products
+            if ($products->count() > 0) {
+                $this->productsByCategory[$category->id] = [
+                    'category_name' => $category->name,
+                    'products' => $products
+                ];
+            }
         }
 
         if (!empty($this->productsByCategory)) {
@@ -227,10 +254,9 @@ class ShopDetails extends Component
 
         // Second pass: count products in each category
         foreach ($categoriesById as $id => $categoryData) {
-            // Count products directly in this category
-            $productCount = ShopProduct::where('shop_id', $this->selectedShopId)
-                ->join('products', 'shop_products.product_id', '=', 'products.id')
-                ->where('products.category_id', $id)
+            // Count products directly in this category - using shop_category_id
+            $productCount = ShopProduct::where('shop_products.shop_id', $this->selectedShopId)
+                ->where('shop_products.shop_category_id', $id)
                 ->count();
 
             $categoriesById[$id]['product_count'] = $productCount;
@@ -276,19 +302,19 @@ class ShopDetails extends Component
             return;
         }
 
-        $this->categoryProducts = ShopProduct::where('shop_id', $this->selectedShopId)
-            ->join('products', 'shop_products.product_id', '=', 'products.id')
-            ->where('products.category_id', $categoryId)
+        $this->categoryProducts = ShopProduct::where('shop_products.shop_id', $this->selectedShopId)
+            ->where('shop_products.shop_category_id', $categoryId)
             ->select(
                 'shop_products.id',
-                'shop_products.product_id',
-                'products.name',
-                'products.description',
+                'shop_products.name',
+                'shop_products.description', // Now including the description field
+                'shop_products.global_product_id',
                 'shop_products.price',
-                'shop_products.stock',
-                'shop_products.status'
+                'shop_products.stock_quantity as stock',
+                'shop_products.status',
+                'shop_products.source_type'
             )
-            ->orderBy('products.name')
+            ->orderBy('shop_products.name')
             ->get();
     }
 
@@ -312,5 +338,113 @@ class ShopDetails extends Component
     {
         $this->showShopManager = false;
         $this->shopDetailView = 'overview';
+    }
+
+    /**
+     * Load staff members for the selected shop
+     */
+    public function loadStaffMembers()
+    {
+        if (!$this->selectedShopId) {
+            return;
+        }
+
+        $shop = Shop::findOrFail($this->selectedShopId);
+        $this->staffMembers = $shop->staff()->with('role')->get();
+    }
+
+    /**
+     * Load available users that can be assigned as staff
+     */
+    public function loadAvailableUsers()
+    {
+        $currentUser = Auth::user();
+
+        // Get appropriate users based on role
+        if ($currentUser->isSuperadmin() || $currentUser->isAdmin()) {
+            // Admins can assign anyone
+            $this->users = User::with('role')->get();
+        } else {
+            // Regular users (shop owners) can only assign staff role users
+            $staffRoleId = \App\Models\Role::where('name', 'staff')->value('id');
+            $this->users = User::where('role_id', $staffRoleId)->get();
+        }
+    }
+
+    /**
+     * Assign a staff member to the shop
+     */
+    public function assignStaff()
+    {
+        $this->validate([
+            'selectedUserId' => 'required|exists:users,id',
+            'selectedRole' => 'required|in:manager,staff',
+        ]);
+
+        $shop = Shop::findOrFail($this->selectedShopId);
+
+        // Check authorization
+        $currentUser = Auth::user();
+        if (!$currentUser->isAdmin() && !$currentUser->isSuperadmin() && $shop->owner_id != $currentUser->id) {
+            $this->addError('selectedUserId', 'You do not have permission to assign staff to this shop.');
+            return;
+        }
+
+        // Check if user is already assigned to the shop
+        $existing = $shop->staff()->where('user_id', $this->selectedUserId)->exists();
+
+        if ($existing) {
+            // Update their role instead
+            $shop->staff()->updateExistingPivot($this->selectedUserId, [
+                'role' => $this->selectedRole
+            ]);
+            session()->flash('message', 'Staff member role updated successfully.');
+        } else {
+            // Attach the user as new staff
+            $shop->staff()->attach($this->selectedUserId, [
+                'role' => $this->selectedRole
+            ]);
+            session()->flash('message', 'Staff member assigned to shop successfully.');
+        }
+
+        // Reset fields and refresh staff list
+        $this->reset(['selectedUserId', 'selectedRole']);
+        $this->loadStaffMembers();
+    }
+
+    /**
+     * Confirm removing staff member from shop
+     */
+    public function confirmRemoveStaff($userId)
+    {
+        $this->staffToRemove = $userId;
+    }
+
+    /**
+     * Remove a staff member from the shop
+     */
+    public function removeStaff()
+    {
+        if (!$this->selectedShopId || !$this->staffToRemove) {
+            return;
+        }
+
+        $shop = Shop::findOrFail($this->selectedShopId);
+
+        // Check authorization
+        $currentUser = Auth::user();
+        if (!$currentUser->isAdmin() && !$currentUser->isSuperadmin() && $shop->owner_id != $currentUser->id) {
+            $this->addError('staffToRemove', 'You do not have permission to remove staff from this shop.');
+            return;
+        }
+
+        // Detach the staff member
+        $shop->staff()->detach($this->staffToRemove);
+
+        $this->staffToRemove = null;
+        session()->flash('message', 'Staff member removed successfully.');
+
+        // Refresh staff list
+        $this->loadStaffMembers();
     }
 }

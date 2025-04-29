@@ -648,6 +648,9 @@ class ShopManager extends Component
         ]);
         $this->isEditingCategory = false;
         session()->flash('message', $this->categoryId ? 'Category updated successfully.' : 'Category created successfully.');
+        
+        // Close the category management modal after saving
+        $this->isManagingCategories = false;
     }
 
     // Cancel category editing

@@ -113,6 +113,27 @@
                                     </button>
                                     @endif
 
+                                    <!-- Inventory button -->
+                                    @if(auth()->user()->isSuperadmin() || auth()->user()->isAdmin() || $shop->owner_id === auth()->id())
+                                    <button wire:click="selectShopForProductManagement({{ $shop->id }})" class="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-5 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:border-blue-300 focus:ring focus:ring-blue-200 active:bg-blue-200 transition ease-in-out duration-150">
+                                        <svg class="-ml-0.5 mr-1.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z" />
+                                            <path fill-rule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd" />
+                                        </svg>
+                                        Products
+                                    </button>
+                                    @endif
+
+                                    <!-- Categories button -->
+                                    @if(auth()->user()->isSuperadmin() || auth()->user()->isAdmin() || $shop->owner_id === auth()->id())
+                                    <button wire:click="selectShopForCategoryManagement({{ $shop->id }})" class="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-5 font-medium rounded-md text-yellow-700 bg-yellow-100 hover:bg-yellow-200 focus:outline-none focus:border-yellow-300 focus:ring focus:ring-yellow-200 active:bg-yellow-200 transition ease-in-out duration-150">
+                                        <svg class="-ml-0.5 mr-1.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
+                                        </svg>
+                                        Categories
+                                    </button>
+                                    @endif
+
                                     <!-- Staff button -->
                                     @if(auth()->user()->isSuperadmin() || auth()->user()->isAdmin() || $shop->owner_id === auth()->id())
                                     <button wire:click="selectShopForStaffAssignment({{ $shop->id }})" class="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-5 font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:border-green-300 focus:ring focus:ring-green-200 active:bg-green-200 transition ease-in-out duration-150">
@@ -441,6 +462,73 @@
                             Cancel
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        <!-- Category Management Modal -->
+        @if($isManagingCategories)
+        <div class="fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+                <!-- Modal panel -->
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <form wire:submit.prevent="saveCategory">
+                        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">
+                                {{ $categoryId ? 'Edit Category' : 'Create New Category' }}
+                            </h3>
+
+                            <div class="mt-4 space-y-4">
+                                <!-- Category Name -->
+                                <div>
+                                    <label for="categoryName" class="block text-sm font-medium text-gray-700">Category Name</label>
+                                    <input type="text" wire:model="categoryName" id="categoryName" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                    @error('categoryName') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                </div>
+
+                                <!-- Description -->
+                                <div>
+                                    <label for="categoryDescription" class="block text-sm font-medium text-gray-700">Description</label>
+                                    <textarea wire:model="categoryDescription" id="categoryDescription" rows="3" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></textarea>
+                                    @error('categoryDescription') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                </div>
+
+                                <!-- Parent Category -->
+                                <div>
+                                    <label for="parentCategoryId" class="block text-sm font-medium text-gray-700">Parent Category</label>
+                                    <select id="parentCategoryId" wire:model="parentCategoryId" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                        <option value="">None</option>
+                                        @foreach($parentCategories as $parentCategory)
+                                            <option value="{{ $parentCategory->id }}">{{ $parentCategory->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('parentCategoryId') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                </div>
+
+                                <!-- Status -->
+                                <div>
+                                    <label for="categoryStatus" class="block text-sm font-medium text-gray-700">Status</label>
+                                    <select id="categoryStatus" wire:model="categoryStatus" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select>
+                                    @error('categoryStatus') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                            <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+                                Save
+                            </button>
+                            <button type="button" wire:click="cancelCategoryEdit" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-300 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

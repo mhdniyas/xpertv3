@@ -2,13 +2,13 @@
     <div class="bg-white rounded-lg shadow overflow-hidden">
         <div class="p-6">
             <h2 class="text-2xl font-bold text-gray-800 mb-6">Shop Management</h2>
-            
+
             <!-- Shop Selector -->
             <div class="mb-6">
                 <label for="shop-selector" class="block text-sm font-medium text-gray-700 mb-2">Select a Shop</label>
-                <select 
-                    id="shop-selector" 
-                    wire:model.live="selectedShopId" 
+                <select
+                    id="shop-selector"
+                    wire:model.live="selectedShopId"
                     wire:change="selectShop($event.target.value)"
                     class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
                 >
@@ -23,32 +23,38 @@
                 <!-- Shop Details Navigation -->
                 <div class="border-b border-gray-200 mb-6">
                     <nav class="flex -mb-px space-x-6">
-                        <a href="#" 
-                            wire:click.prevent="setShopDetailView('overview')" 
+                        <a href="#"
+                            wire:click.prevent="setShopDetailView('overview')"
                             class="{{ $shopDetailView === 'overview' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm"
                         >
                             Overview
                         </a>
-                        <a href="#" 
-                            wire:click.prevent="setShopDetailView('inventory')" 
+                        <a href="#"
+                            wire:click.prevent="setShopDetailView('inventory')"
                             class="{{ $shopDetailView === 'inventory' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm"
                         >
                             Inventory
                         </a>
-                        <a href="#" 
-                            wire:click.prevent="setShopDetailView('categories')" 
+                        <a href="#"
+                            wire:click.prevent="setShopDetailView('categories')"
                             class="{{ $shopDetailView === 'categories' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm"
                         >
                             Categories
                         </a>
-                        <a href="#" 
-                            wire:click.prevent="setShopDetailView('sales')" 
+                        <a href="#"
+                            wire:click.prevent="setShopDetailView('sales')"
                             class="{{ $shopDetailView === 'sales' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm"
                         >
                             Sales
                         </a>
-                        <a href="#" 
-                            wire:click.prevent="toggleShopManager({{ $selectedShop->id }})" 
+                        <a href="#"
+                            wire:click.prevent="setShopDetailView('staff')"
+                            class="{{ $shopDetailView === 'staff' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm"
+                        >
+                            Staff
+                        </a>
+                        <a href="#"
+                            wire:click.prevent="toggleShopManager({{ $selectedShop->id }})"
                             class="{{ $shopDetailView === 'manager' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm"
                         >
                             Shop Manager
@@ -78,7 +84,7 @@
                                                     Rejected
                                                 </span>
                                             @endif
-                                            
+
                                             @if($selectedShop->is_active)
                                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 ml-2">
                                                     Active
@@ -121,7 +127,7 @@
                                 </dl>
                             </div>
                         </div>
-                        
+
                         <!-- Shop Stats -->
                         <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                             <!-- Products Count -->
@@ -213,7 +219,85 @@
                 @elseif($shopDetailView === 'inventory')
                     <div>
                         <h3 class="text-lg font-medium text-gray-900 mb-4">Inventory Management</h3>
-                        
+
+                        <!-- Quick Add Product Form -->
+                        <div class="bg-white p-4 mb-6 rounded-lg shadow">
+                            <h4 class="font-medium text-gray-900 mb-3">Add New Product</h4>
+                            <form wire:submit.prevent="saveProduct">
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                                    <div>
+                                        <label for="productName" class="block text-sm font-medium text-gray-700">Product Name</label>
+                                        <input type="text" wire:model="productName" id="productName" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                                        @error('productName') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="productCategoryId" class="block text-sm font-medium text-gray-700">Category</label>
+                                        <select wire:model="productCategoryId" id="productCategoryId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                                            <option value="">Select Category</option>
+                                            @forelse($shopCategories ?? [] as $catId => $category)
+                                                <option value="{{ $catId }}">{{ $category['name'] }}</option>
+                                                @if(!empty($category['children']))
+                                                    @foreach($category['children'] as $childId => $childCategory)
+                                                        <option value="{{ $childId }}">-- {{ $childCategory['name'] }}</option>
+                                                    @endforeach
+                                                @endif
+                                            @empty
+                                                <option disabled>No categories available</option>
+                                            @endforelse
+                                        </select>
+                                        @error('productCategoryId') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="productPrice" class="block text-sm font-medium text-gray-700">Price</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">$</span>
+                                            </div>
+                                            <input type="number" wire:model="productPrice" id="productPrice" step="0.01" min="0" class="pl-7 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                                        </div>
+                                        @error('productPrice') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="productDescription" class="block text-sm font-medium text-gray-700">Description</label>
+                                    <textarea wire:model="productDescription" id="productDescription" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"></textarea>
+                                    @error('productDescription') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                    <div>
+                                        <label for="productStock" class="block text-sm font-medium text-gray-700">Stock Quantity</label>
+                                        <input type="number" wire:model="productStock" id="productStock" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                                        @error('productStock') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="productStatus" class="block text-sm font-medium text-gray-700">Status</label>
+                                        <select wire:model="productStatus" id="productStatus" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                                            <option value="active">Active</option>
+                                            <option value="inactive">Inactive</option>
+                                        </select>
+                                        @error('productStatus') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="productUnit" class="block text-sm font-medium text-gray-700">Unit</label>
+                                        <input type="text" wire:model="productUnit" id="productUnit" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" placeholder="piece, kg, liter, etc.">
+                                        @error('productUnit') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-end">
+                                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                        Add Product
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
                         @if(empty($productsByCategory))
                             <div class="bg-yellow-50 p-4 rounded-md">
                                 <div class="flex">
@@ -224,7 +308,7 @@
                                     </div>
                                     <div class="ml-3">
                                         <p class="text-sm text-yellow-700">
-                                            No products found for this shop. Add products from the Shop Manager tab.
+                                            No products found for this shop. Use the form above to add products.
                                         </p>
                                     </div>
                                 </div>
@@ -236,8 +320,8 @@
                                     <h4 class="font-medium text-gray-700 mb-3">Categories</h4>
                                     <nav class="space-y-1">
                                         @foreach($productsByCategory as $catId => $category)
-                                            <a href="#" 
-                                                wire:click.prevent="selectCategory({{ $catId }})" 
+                                            <a href="#"
+                                                wire:click.prevent="selectCategory({{ $catId }})"
                                                 class="{{ $selectedCategoryId == $catId ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-500' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }} flex items-center px-3 py-2 text-sm font-medium"
                                             >
                                                 {{ $category['category_name'] }}
@@ -248,7 +332,7 @@
                                         @endforeach
                                     </nav>
                                 </div>
-                                
+
                                 <!-- Products table -->
                                 <div class="col-span-1 lg:col-span-3">
                                     @if($selectedCategoryId && isset($productsByCategory[$selectedCategoryId]))
@@ -298,7 +382,7 @@
                 @elseif($shopDetailView === 'categories')
                     <div>
                         <h3 class="text-lg font-medium text-gray-900 mb-4">Categories Management</h3>
-                        
+
                         @if(empty($shopCategories))
                             <div class="bg-yellow-50 p-4 rounded-md">
                                 <div class="flex">
@@ -350,7 +434,7 @@
                                                     </svg>
                                                 </div>
                                             </div>
-                                            
+
                                             @if(!empty($category['children']))
                                                 <div class="pl-8 pb-4">
                                                     <h4 class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Subcategories</h4>
@@ -380,7 +464,7 @@
                 @elseif($shopDetailView === 'sales')
                     <div>
                         <h3 class="text-lg font-medium text-gray-900 mb-4">Sales Analytics</h3>
-                        
+
                         <div class="bg-yellow-50 p-4 rounded-md">
                             <div class="flex">
                                 <div class="flex-shrink-0">
@@ -392,6 +476,100 @@
                                     <p class="text-sm text-yellow-700">
                                         Sales analytics functionality is coming soon. This feature is in development.
                                     </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @elseif($shopDetailView === 'staff')
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Staff Management</h3>
+
+                        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                            <div class="p-4 bg-gray-50">
+                                <h4 class="font-medium text-gray-700 mb-3">Add Staff Member</h4>
+                                <form wire:submit.prevent="assignStaff">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <!-- User selection -->
+                                        <div>
+                                            <label for="selectedUserId" class="block text-sm font-medium text-gray-700">User</label>
+                                            <select id="selectedUserId" wire:model="selectedUserId" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                                <option value="">Select User</option>
+                                                @foreach($users ?? [] as $user)
+                                                    <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->role->name }})</option>
+                                                @endforeach
+                                            </select>
+                                            @error('selectedUserId') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                        </div>
+
+                                        <!-- Role selection -->
+                                        <div>
+                                            <label for="selectedRole" class="block text-sm font-medium text-gray-700">Role</label>
+                                            <select id="selectedRole" wire:model="selectedRole" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                                @foreach($roles ?? ['staff', 'manager'] as $role)
+                                                    <option value="{{ $role }}">{{ ucfirst($role) }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('selectedRole') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                    <div class="mt-4">
+                                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                            Add Staff Member
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Staff list -->
+                            <div class="px-4 py-4">
+                                <h4 class="font-medium text-gray-700 mb-3">Current Staff</h4>
+                                <div class="overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200">
+                                            @forelse($staffMembers ?? [] as $staff)
+                                                <tr>
+                                                    <td class="px-6 py-4 whitespace-nowrap">
+                                                        <div class="flex items-center">
+                                                            <div class="h-10 w-10 flex-shrink-0 rounded-full bg-gray-100 overflow-hidden">
+                                                                @if($staff->photo)
+                                                                    <img src="{{ Storage::url($staff->photo) }}" alt="{{ $staff->name }}" class="h-10 w-10 object-cover">
+                                                                @else
+                                                                    <svg class="h-10 w-10 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                                                                        <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                                                                    </svg>
+                                                                @endif
+                                                            </div>
+                                                            <div class="ml-4">
+                                                                <div class="text-sm font-medium text-gray-900">{{ $staff->name }}</div>
+                                                                <div class="text-sm text-gray-500">{{ $staff->email }}</div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $staff->pivot->role === 'manager' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800' }}">
+                                                            {{ ucfirst($staff->pivot->role) }}
+                                                        </span>
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                        <button wire:click="confirmRemoveStaff({{ $staff->id }})" class="text-red-600 hover:text-red-900">Remove</button>
+                                                    </td>
+                                                </tr>
+                                            @empty
+                                                <tr>
+                                                    <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">
+                                                        No staff members assigned to this shop yet.
+                                                    </td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -419,7 +597,7 @@
                             <p class="text-sm text-yellow-700">
                                 @if($userShops->isEmpty())
                                     You don't have any shops yet. Please create a shop first.
-                                    
+
                                     @if($currentUser->isAdmin() || $currentUser->isSuperadmin())
                                         <a href="#" class="font-medium underline text-yellow-700 hover:text-yellow-600">
                                             Create Shop
@@ -435,4 +613,43 @@
             @endif
         </div>
     </div>
+
+    <!-- Staff Removal Confirmation Modal -->
+    @if($staffToRemove)
+    <div class="fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                Remove Staff Member
+                            </h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500">
+                                    Are you sure you want to remove this staff member from the shop? They will no longer have access to manage this shop.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button wire:click="removeStaff" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Remove
+                    </button>
+                    <button wire:click="$set('staffToRemove', null)" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>
