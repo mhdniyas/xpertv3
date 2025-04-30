@@ -17,14 +17,19 @@ class ShopDetails extends Component
 {
     use WithPagination;
 
+    // Current authenticated user
+    public $currentUser;
+    
     // Shop detail properties
     public $selectedShopId = null;
     public $shopDetailView = 'overview'; // overview, inventory, categories, sales, staff, manager
     public $productsByCategory = [];
-    public $shopCategories = [];
+    public $shopCategories = []; // Ensuring it's initialized as an empty array
     public $selectedCategoryId = null;
     public $showShopManager = false;
     public $searchTerm = '';
+    public $categoriesCount = 0;
+    public $categoryProducts = [];
 
     // For staff management
     public $selectedUserId;
@@ -156,8 +161,18 @@ class ShopDetails extends Component
         // Load summary data
         $this->shopProducts = ShopProduct::where('shop_id', $this->selectedShopId)
             ->count();
-        $this->shopCategories = ShopCategory::where('shop_id', $this->selectedShopId)
-            ->count();
+            
+        // Changed from count() to returning an empty array
+        // This ensures $shopCategories is always an array, not an integer
+        if ($this->shopDetailView !== 'categories') {
+            $categoriesCount = ShopCategory::where('shop_id', $this->selectedShopId)
+                ->count();
+            // Only store the count, don't override the actual categories array
+            $this->categoriesCount = $categoriesCount;
+        } else {
+            // If we're in categories view, we'll load the full categories data
+            $this->loadShopCategories();
+        }
 
         // Load shop statistics (replace with actual implementation)
         $this->shopSales = [
