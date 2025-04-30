@@ -599,12 +599,12 @@
                 @elseif($shopDetailView === 'manager')
                     <div>
                         <h3 class="text-lg font-medium text-gray-900 mb-4">Shop Manager</h3>
-                        
+
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <!-- Staff Management Section -->
                             <div class="col-span-1 md:col-span-2 bg-white p-6 rounded-lg shadow">
                                 <h4 class="font-medium text-gray-900 mb-4">Staff Management</h4>
-                                
+
                                 <form wire:submit.prevent="assignStaff" class="mb-6">
                                     <div class="mb-4">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Search Users</label>
@@ -612,7 +612,7 @@
                                             <input type="text" wire:model.debounce.300ms="searchTerm" class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-3 pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="Search by name or email...">
                                         </div>
                                     </div>
-                                    
+
                                     <div class="mb-4">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Available Users</label>
                                         @if($availableUsers->isEmpty())
@@ -633,7 +633,7 @@
                                             </div>
                                         @endif
                                     </div>
-                                    
+
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label for="selectedUserId" class="block text-sm font-medium text-gray-700">Selected User</label>
@@ -645,7 +645,7 @@
                                             </select>
                                             @error('selectedUserId') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
                                         </div>
-                                        
+
                                         <div>
                                             <label for="selectedRole" class="block text-sm font-medium text-gray-700">Role</label>
                                             <select id="selectedRole" wire:model="selectedRole" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
@@ -655,14 +655,14 @@
                                             @error('selectedRole') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
-                                    
+
                                     <div class="mt-4">
                                         <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                             Add Staff Member
                                         </button>
                                     </div>
                                 </form>
-                                
+
                                 <!-- Current Staff List -->
                                 <h5 class="font-medium text-gray-700 mb-2 mt-8">Current Staff</h5>
                                 <div class="bg-white shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
@@ -727,12 +727,12 @@
                                     </table>
                                 </div>
                             </div>
-                            
+
                             <!-- Shop Settings Section -->
                             <div class="col-span-1 space-y-6">
                                 <div class="bg-white p-6 rounded-lg shadow">
                                     <h4 class="font-medium text-gray-900 mb-4">Shop Status</h4>
-                                    
+
                                     <div class="space-y-4">
                                         <div class="flex justify-between items-center">
                                             <span class="text-sm font-medium text-gray-700">Active Status</span>
@@ -740,21 +740,21 @@
                                                 {{ $selectedShop->is_active ? 'Active' : 'Inactive' }}
                                             </span>
                                         </div>
-                                        
+
                                         <div class="flex justify-between items-center">
                                             <span class="text-sm font-medium text-gray-700">Approval Status</span>
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                                {{ $selectedShop->status === 'approved' ? 'bg-green-100 text-green-800' : 
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                                {{ $selectedShop->status === 'approved' ? 'bg-green-100 text-green-800' :
                                                   ($selectedShop->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') }}">
                                                 {{ ucfirst($selectedShop->status) }}
                                             </span>
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="bg-white p-6 rounded-lg shadow">
                                     <h4 class="font-medium text-gray-900 mb-4">Quick Stats</h4>
-                                    
+
                                     <div class="space-y-4">
                                         <div>
                                             <div class="flex justify-between items-center">
@@ -762,14 +762,14 @@
                                                 <span class="text-sm font-semibold text-gray-900">{{ $shopProducts ?? 0 }}</span>
                                             </div>
                                         </div>
-                                        
+
                                         <div>
                                             <div class="flex justify-between items-center">
                                                 <span class="text-sm font-medium text-gray-700">Categories</span>
                                                 <span class="text-sm font-semibold text-gray-900">{{ $categoriesCount ?? 0 }}</span>
                                             </div>
                                         </div>
-                                        
+
                                         <div>
                                             <div class="flex justify-between items-center">
                                                 <span class="text-sm font-medium text-gray-700">Staff Members</span>
@@ -778,19 +778,19 @@
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="bg-white p-6 rounded-lg shadow">
                                     <h4 class="font-medium text-gray-900 mb-4">Shop Actions</h4>
-                                    
+
                                     <div class="space-y-3">
                                         <a href="{{ route('shop.details', ['shopId' => $selectedShop->id]) }}" class="w-full inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 justify-center">
                                             Shop Details
                                         </a>
-                                        
+
                                         <a href="{{ route('shop.categories', ['shop' => $selectedShop->id]) }}" class="w-full inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 justify-center">
                                             Manage Categories
                                         </a>
-                                        
+
                                         <a href="{{ route('shop.products', ['shop' => $selectedShop->id]) }}" class="w-full inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 justify-center">
                                             Manage Products
                                         </a>

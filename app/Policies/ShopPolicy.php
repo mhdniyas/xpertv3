@@ -35,12 +35,12 @@ class ShopPolicy
         if ($user->isSuperadmin() || $user->isAdmin()) {
             return true;
         }
-        
+
         // Shop owner can manage products for their shop
         if ($shop->owner_id === $user->id) {
             return true;
         }
-        
+
         // Shop staff with manager role can manage products
         return $shop->staff()->where('user_id', $user->id)
             ->where('role', 'manager')
@@ -74,17 +74,17 @@ class ShopPolicy
         if ($user->isSuperadmin()) {
             return true;
         }
-        
+
         // Admin can update any shop
         if ($user->isAdmin()) {
             return true;
         }
-        
+
         // Shop owner can update their own shop
         if ($shop->owner_id === $user->id) {
             return true;
         }
-        
+
         // Shop staff with manager role can update the shop
         return $shop->staff()->where('user_id', $user->id)
             ->where('role', 'manager')
@@ -100,7 +100,7 @@ class ShopPolicy
         if ($user->isSuperadmin() || $user->isAdmin()) {
             return true;
         }
-        
+
         // Shop owner can delete their own shop
         return $shop->owner_id === $user->id;
     }

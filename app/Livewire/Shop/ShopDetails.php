@@ -67,7 +67,7 @@ class ShopDetails extends Component
 
         if ($shopId) {
             $this->selectedShopId = $shopId;
-            
+
             // Set the view if provided in the URL
             if ($view === 'manager') {
                 $this->shopDetailView = 'manager';
@@ -75,7 +75,7 @@ class ShopDetails extends Component
                 $this->loadShopStaff();
                 $this->loadAvailableUsers();
             }
-            
+
             $this->loadShopDetails();
         }
     }
@@ -525,7 +525,7 @@ class ShopDetails extends Component
         }
 
         $shop = Shop::findOrFail($this->selectedShopId);
-        
+
         // Get staff members with their roles - removed reference to non-existent column
         $this->shopStaff = $shop->staff()
             ->select('users.id', 'users.name', 'users.email', 'shop_user.role')
@@ -544,14 +544,14 @@ class ShopDetails extends Component
     {
         $shop = Shop::findOrFail($this->selectedShopId);
         $currentUserId = Auth::id();
-        
+
         // Get current staff IDs to exclude
         $currentStaffIds = $shop->staff()->pluck('user_id')->toArray();
         $currentStaffIds[] = $shop->owner_id; // Also exclude the owner
-        
+
         // Get users that aren't already staff or owner
         $query = User::whereNotIn('id', $currentStaffIds);
-        
+
         // Filter by search term if provided
         if (!empty($this->searchTerm)) {
             $query->where(function($q) {
@@ -559,7 +559,7 @@ class ShopDetails extends Component
                   ->orWhere('email', 'like', "%{$this->searchTerm}%");
             });
         }
-        
+
         $this->availableUsers = $query->select('id', 'name', 'email')
             ->orderBy('name')
             ->limit(10)
@@ -588,23 +588,23 @@ class ShopDetails extends Component
         try {
             $shop = Shop::findOrFail($this->selectedShopId);
             $currentUser = Auth::user();
-            
+
             // Check permission to update staff
             if (!$currentUser->isAdmin() && !$currentUser->isSuperadmin() && $shop->owner_id != $currentUser->id) {
                 session()->flash('error', 'You do not have permission to update staff roles.');
                 return;
             }
-            
+
             // Update the role
             $shop->staff()->updateExistingPivot($staffId, [
                 'role' => $role
             ]);
-            
+
             session()->flash('message', 'Staff role updated successfully.');
-            
+
             // Reload staff list to reflect changes
             $this->loadShopStaff();
-            
+
         } catch (\Exception $e) {
             session()->flash('error', 'Error updating staff role: ' . $e->getMessage());
         }
