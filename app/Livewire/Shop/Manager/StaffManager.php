@@ -17,7 +17,7 @@ class StaffManager extends Component
     public $shopId;
     public $shop;
     public $currentUser;
-    
+
     // Staff management
     public $selectedUserId;
     public $selectedRole = 'staff';
@@ -29,7 +29,7 @@ class StaffManager extends Component
 
     // Modal controls
     public $showConfirmModal = false;
-    
+
     protected $listeners = [
         'refreshStaffList' => 'loadStaffMembers'
     ];
@@ -83,7 +83,7 @@ class StaffManager extends Component
 
         // Get users based on search term
         $query = User::query();
-        
+
         if ($this->searchTerm) {
             $query->where(function($q) {
                 $q->where('name', 'like', '%' . $this->searchTerm . '%')

@@ -66,10 +66,15 @@ Route::middleware(['auth'])->group(function () {
     // Shop Management
     Route::get('/shops', ShopManager::class)
         ->name('shops.manage');
-        
+
     // Shop Details
     Route::get('/shop/{shopId}/details', App\Livewire\Shop\ShopDetails::class)
         ->name('shop.details');
+
+    // Shop Manager Dashboard
+    Route::get('/shop/{shopId}/manager', App\Livewire\Shop\ShopDetails::class)
+        ->defaults('view', 'manager')
+        ->name('shop.manager');
 
     // Shop Category Management
     Route::get('/shop/{shop}/categories', ShopCategoryManager::class)

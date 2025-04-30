@@ -14,7 +14,7 @@
                 </div>
                 <div>
                     <a href="{{ route('shop.details', ['shopId' => $shop->id]) }}" class="text-sm text-gray-500 hover:text-gray-700">
-                        <span class="mr-1">←</span> Back to Shop
+                        <span class="mr-1">←</span> Back to Shop Details
                     </a>
                 </div>
             </div>
@@ -32,8 +32,8 @@
                     </div>
                     <nav class="py-2">
                         @foreach($views as $key => $label)
-                            <a 
-                                wire:click="changeView('{{ $key }}')" 
+                            <a
+                                wire:click="changeView('{{ $key }}')"
                                 class="flex items-center px-4 py-3 {{ $currentView === $key ? 'bg-indigo-50 text-indigo-600' : 'text-gray-700 hover:bg-gray-50' }} cursor-pointer transition-colors duration-150"
                             >
                                 @switch($key)
@@ -104,11 +104,11 @@
                         </div>
                         <div class="text-xs text-gray-500">
                             <p class="mb-1">
-                                <span class="font-medium">Created On:</span> 
+                                <span class="font-medium">Created On:</span>
                                 {{ $shop->created_at->format('M d, Y') }}
                             </p>
                             <p>
-                                <span class="font-medium">Last Updated:</span> 
+                                <span class="font-medium">Last Updated:</span>
                                 {{ $shop->updated_at->format('M d, Y') }}
                             </p>
                         </div>
@@ -214,7 +214,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Recent Activity / Orders -->
                         <div class="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -239,7 +239,7 @@
                                 @endif
                             </div>
                         </div>
-                        
+
                         <!-- Revenue Summary -->
                         <div class="bg-white rounded-lg shadow-sm overflow-hidden">
                             <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200">
@@ -264,7 +264,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Inventory Alerts -->
                     <div class="mt-6 bg-white rounded-lg shadow-sm overflow-hidden">
                         <div class="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200">
@@ -295,7 +295,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="mt-6 flex justify-center">
                                 <a wire:click="changeView('products')" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none cursor-pointer">
                                     Manage Inventory

@@ -63,7 +63,7 @@ class CategoryManager extends Component
     {
         // Get global categories for mapping to shop categories
         $globalCategories = Category::active()->get();
-        
+
         // Get parent categories for dropdown (excluding current category if editing)
         $parentCategories = ShopCategory::where('shop_id', $this->shopId)
             ->when($this->categoryId, function ($query) {
@@ -100,7 +100,7 @@ class CategoryManager extends Component
 
         // Get all shop categories
         $query = ShopCategory::where('shop_id', $this->shopId);
-        
+
         // Apply search if provided
         if ($this->searchTerm) {
             $query->where(function ($q) {
@@ -108,7 +108,7 @@ class CategoryManager extends Component
                   ->orWhere('description', 'like', '%' . $this->searchTerm . '%');
             });
         }
-        
+
         $shopCategories = $query->orderBy('parent_id', 'asc')
             ->orderBy('name', 'asc')
             ->get();
@@ -233,9 +233,9 @@ class CategoryManager extends Component
         $this->reset(['categoryId', 'categoryName', 'categoryDescription', 'parentCategoryId', 'selectedGlobalCategory']);
         $this->categoryStatus = 'active';
         $this->isEditingCategory = false;
-        
+
         session()->flash('message', $this->categoryId ? 'Category updated successfully.' : 'Category created successfully.');
-        
+
         // Refresh the categories list
         $this->loadShopCategories();
     }
@@ -309,7 +309,7 @@ class CategoryManager extends Component
         $this->categoryToDelete = null;
         $this->showConfirmModal = false;
         session()->flash('message', 'Category deleted successfully.');
-        
+
         // Refresh the categories list
         $this->loadShopCategories();
     }
@@ -323,16 +323,16 @@ class CategoryManager extends Component
             session()->flash('error', 'Invalid status.');
             return;
         }
-        
+
         $category = ShopCategory::findOrFail($categoryId);
-        
+
         // Check permission
         $shop = Shop::findOrFail($category->shop_id);
         $this->authorize('update', $shop);
-        
+
         $category->status = $newStatus;
         $category->save();
-        
+
         session()->flash('message', 'Category status updated successfully.');
         $this->loadShopCategories();
     }

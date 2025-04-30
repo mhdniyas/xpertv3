@@ -4,27 +4,27 @@
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-semibold text-gray-800">Staff Management for {{ $shop->name }}</h2>
             </div>
-            
+
             <!-- Staff Assignment Form -->
             <div class="mb-6 bg-gray-50 p-4 rounded-md">
                 <h3 class="text-lg font-medium mb-3">Assign New Staff Member</h3>
-                
+
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <!-- User Search and Selection -->
                     <div>
                         <label for="selectedUserId" class="block text-sm font-medium text-gray-700 mb-1">Select User</label>
                         <div class="relative">
-                            <input 
-                                type="text" 
-                                wire:model.live="searchTerm" 
-                                placeholder="Search users..." 
+                            <input
+                                type="text"
+                                wire:model.live="searchTerm"
+                                placeholder="Search users..."
                                 class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mb-2"
                             >
                             @if(count($users) > 0)
                                 <div class="absolute z-10 w-full bg-white shadow-lg max-h-60 overflow-auto border border-gray-300 rounded-md">
                                     @foreach($users as $user)
-                                        <div 
-                                            wire:click="$set('selectedUserId', '{{ $user->id }}')" 
+                                        <div
+                                            wire:click="$set('selectedUserId', '{{ $user->id }}')"
                                             class="px-4 py-2 hover:bg-gray-100 cursor-pointer {{ $selectedUserId == $user->id ? 'bg-indigo-50' : '' }}"
                                         >
                                             <div>{{ $user->name }}</div>
@@ -41,8 +41,8 @@
                     <!-- Role Selection -->
                     <div>
                         <label for="selectedRole" class="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                        <select 
-                            wire:model="selectedRole" 
+                        <select
+                            wire:model="selectedRole"
                             class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                         >
                             @foreach($roles as $role)
@@ -54,8 +54,8 @@
 
                     <!-- Submit Button -->
                     <div class="flex items-end">
-                        <button 
-                            wire:click="assignStaff" 
+                        <button
+                            wire:click="assignStaff"
                             class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         >
                             Assign Staff
@@ -67,7 +67,7 @@
             <!-- Staff Members List -->
             <div>
                 <h3 class="text-lg font-medium mb-3">Current Staff Members</h3>
-                
+
                 @if(count($staffMembers) > 0)
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
@@ -96,8 +96,8 @@
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <button 
-                                                wire:click="confirmRemoveStaff({{ $staff->id }})" 
+                                            <button
+                                                wire:click="confirmRemoveStaff({{ $staff->id }})"
                                                 class="text-red-600 hover:text-red-900"
                                             >
                                                 Remove
@@ -141,16 +141,16 @@
                     </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button 
-                        wire:click="removeStaff" 
-                        type="button" 
+                    <button
+                        wire:click="removeStaff"
+                        type="button"
                         class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
                     >
                         Remove
                     </button>
-                    <button 
-                        wire:click="cancelRemoveStaff" 
-                        type="button" 
+                    <button
+                        wire:click="cancelRemoveStaff"
+                        type="button"
                         class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                     >
                         Cancel

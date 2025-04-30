@@ -13,7 +13,7 @@ class ShopManagerDashboard extends Component
     // Shop properties
     public $shopId;
     public $shop;
-    
+
     // Dashboard properties
     public $currentView = 'overview';
     public $views = [
@@ -25,10 +25,10 @@ class ShopManagerDashboard extends Component
         'analytics' => 'Analytics',
         'settings' => 'Settings',
     ];
-    
+
     // Statistics
     public $stats = [];
-    
+
     public function mount($shopId)
     {
         $this->shopId = $shopId;
@@ -43,26 +43,26 @@ class ShopManagerDashboard extends Component
             'stats' => $this->stats,
         ]);
     }
-    
+
     /**
      * Load shop data
      */
     public function loadShop()
     {
         $this->shop = Shop::with('owner')->findOrFail($this->shopId);
-        
+
         // Check user permission to access this shop
         $currentUser = Auth::user();
-        $canAccess = $currentUser->isAdmin() || 
-                    $currentUser->isSuperadmin() || 
-                    $this->shop->owner_id == $currentUser->id || 
+        $canAccess = $currentUser->isAdmin() ||
+                    $currentUser->isSuperadmin() ||
+                    $this->shop->owner_id == $currentUser->id ||
                     $this->shop->staff()->where('user_id', $currentUser->id)->exists();
-                    
+
         if (!$canAccess) {
             abort(403, 'You do not have permission to access this shop.');
         }
     }
-    
+
     /**
      * Load shop statistics
      */
@@ -88,7 +88,7 @@ class ShopManagerDashboard extends Component
                 ->count(),
         ];
     }
-    
+
     /**
      * Change current view
      */

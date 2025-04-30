@@ -101,6 +101,11 @@
                                             Edit Shop
                                         </a>
                                     </div>
+                                    <div>
+                                        <a href="{{ route('shop.manager', ['shopId' => $selectedShop->id]) }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                            Open Shop Manager
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                             <div class="border-t border-gray-200">
@@ -230,7 +235,7 @@
                                         <input type="text" wire:model="productName" id="productName" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
                                         @error('productName') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
                                     </div>
-                                    
+
                                     <div>
                                         <label for="productCategoryId" class="block text-sm font-medium text-gray-700">Category</label>
                                         <select wire:model="productCategoryId" id="productCategoryId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
@@ -248,7 +253,7 @@
                                         </select>
                                         @error('productCategoryId') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
                                     </div>
-                                    
+
                                     <div>
                                         <label for="productPrice" class="block text-sm font-medium text-gray-700">Price</label>
                                         <div class="mt-1 relative rounded-md shadow-sm">
@@ -260,20 +265,20 @@
                                         @error('productPrice') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
-                                
+
                                 <div class="mb-4">
                                     <label for="productDescription" class="block text-sm font-medium text-gray-700">Description</label>
                                     <textarea wire:model="productDescription" id="productDescription" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"></textarea>
                                     @error('productDescription') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
                                 </div>
-                                
+
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                     <div>
                                         <label for="productStock" class="block text-sm font-medium text-gray-700">Stock Quantity</label>
                                         <input type="number" wire:model="productStock" id="productStock" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
                                         @error('productStock') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
                                     </div>
-                                    
+
                                     <div>
                                         <label for="productStatus" class="block text-sm font-medium text-gray-700">Status</label>
                                         <select wire:model="productStatus" id="productStatus" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
@@ -282,14 +287,14 @@
                                         </select>
                                         @error('productStatus') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
                                     </div>
-                                    
+
                                     <div>
                                         <label for="productUnit" class="block text-sm font-medium text-gray-700">Unit</label>
                                         <input type="text" wire:model="productUnit" id="productUnit" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" placeholder="piece, kg, liter, etc.">
                                         @error('productUnit') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
-                                
+
                                 <div class="flex items-center justify-end">
                                     <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                         Add Product
@@ -553,9 +558,26 @@
                                                         </div>
                                                     </td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $staff->pivot->role === 'manager' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800' }}">
-                                                            {{ ucfirst($staff->pivot->role) }}
-                                                        </span>
+                                                        <div class="flex items-center">
+                                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $staff->role === 'manager' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800' }}">
+                                                                {{ is_string($staff->role) ? ucfirst($staff->role) : 'Staff' }}
+                                                            </span>
+                                                            <div class="ml-2">
+                                                                @if(is_string($staff->role) && $staff->role === 'staff')
+                                                                    <button type="button" wire:click="updateStaffRole('{{ $staff->id }}', 'manager')" class="text-xs text-gray-600 hover:text-gray-900">
+                                                                        Make Manager
+                                                                    </button>
+                                                                @elseif(is_string($staff->role) && $staff->role === 'manager')
+                                                                    <button type="button" wire:click="updateStaffRole('{{ $staff->id }}', 'staff')" class="text-xs text-gray-600 hover:text-gray-900">
+                                                                        Make Staff
+                                                                    </button>
+                                                                @else
+                                                                    <button type="button" wire:click="updateStaffRole('{{ $staff->id }}', 'manager')" class="text-xs text-gray-600 hover:text-gray-900">
+                                                                        Make Manager
+                                                                    </button>
+                                                                @endif
+                                                            </div>
+                                                        </div>
                                                     </td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                         <button wire:click="confirmRemoveStaff({{ $staff->id }})" class="text-red-600 hover:text-red-900">Remove</button>
@@ -576,7 +598,206 @@
                     </div>
                 @elseif($shopDetailView === 'manager')
                     <div>
-                        <livewire:shop.manager.shop-manager-dashboard :key="'shop-manager-dashboard-' . $selectedShopId" :shopId="$selectedShopId" />
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Shop Manager</h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <!-- Staff Management Section -->
+                            <div class="col-span-1 md:col-span-2 bg-white p-6 rounded-lg shadow">
+                                <h4 class="font-medium text-gray-900 mb-4">Staff Management</h4>
+                                
+                                <form wire:submit.prevent="assignStaff" class="mb-6">
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Search Users</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <input type="text" wire:model.debounce.300ms="searchTerm" class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-3 pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="Search by name or email...">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Available Users</label>
+                                        @if($availableUsers->isEmpty())
+                                            <p class="text-sm text-gray-500 italic">No available users found. Try searching for users.</p>
+                                        @else
+                                            <div class="mt-1 border border-gray-300 rounded-md max-h-48 overflow-y-auto">
+                                                @foreach($availableUsers as $user)
+                                                    <div class="px-4 py-2 hover:bg-gray-50 flex items-center justify-between border-b border-gray-200 last:border-0">
+                                                        <div>
+                                                            <div class="text-sm font-medium text-gray-900">{{ $user->name }}</div>
+                                                            <div class="text-sm text-gray-500">{{ $user->email }}</div>
+                                                        </div>
+                                                        <button type="button" wire:click="$set('selectedUserId', '{{ $user->id }}')" class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                                                            Select
+                                                        </button>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="selectedUserId" class="block text-sm font-medium text-gray-700">Selected User</label>
+                                            <select id="selectedUserId" wire:model="selectedUserId" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                                <option value="">Choose a user</option>
+                                                @foreach($availableUsers as $user)
+                                                    <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
+                                                @endforeach
+                                            </select>
+                                            @error('selectedUserId') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                        </div>
+                                        
+                                        <div>
+                                            <label for="selectedRole" class="block text-sm font-medium text-gray-700">Role</label>
+                                            <select id="selectedRole" wire:model="selectedRole" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                                <option value="staff">Staff</option>
+                                                <option value="manager">Manager</option>
+                                            </select>
+                                            @error('selectedRole') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-4">
+                                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                            Add Staff Member
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <!-- Current Staff List -->
+                                <h5 class="font-medium text-gray-700 mb-2 mt-8">Current Staff</h5>
+                                <div class="bg-white shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Added By</th>
+                                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200">
+                                            @forelse($shopStaff as $staff)
+                                                <tr>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                        {{ $staff->name }}
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {{ $staff->email }}
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        <div class="flex items-center">
+                                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $staff->role === 'manager' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800' }}">
+                                                                {{ is_string($staff->role) ? ucfirst($staff->role) : 'Staff' }}
+                                                            </span>
+                                                            <div class="ml-2">
+                                                                @if(is_string($staff->role) && $staff->role === 'staff')
+                                                                    <button type="button" wire:click="updateStaffRole('{{ $staff->id }}', 'manager')" class="text-xs text-gray-600 hover:text-gray-900">
+                                                                        Make Manager
+                                                                    </button>
+                                                                @elseif(is_string($staff->role) && $staff->role === 'manager')
+                                                                    <button type="button" wire:click="updateStaffRole('{{ $staff->id }}', 'staff')" class="text-xs text-gray-600 hover:text-gray-900">
+                                                                        Make Staff
+                                                                    </button>
+                                                                @else
+                                                                    <button type="button" wire:click="updateStaffRole('{{ $staff->id }}', 'manager')" class="text-xs text-gray-600 hover:text-gray-900">
+                                                                        Make Manager
+                                                                    </button>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {{ $staff->added_by_name }}
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                        <button type="button" wire:click="confirmRemoveStaff('{{ $staff->id }}')" class="text-red-600 hover:text-red-900">
+                                                            Remove
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            @empty
+                                                <tr>
+                                                    <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                                                        No staff members assigned to this shop.
+                                                    </td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- Shop Settings Section -->
+                            <div class="col-span-1 space-y-6">
+                                <div class="bg-white p-6 rounded-lg shadow">
+                                    <h4 class="font-medium text-gray-900 mb-4">Shop Status</h4>
+                                    
+                                    <div class="space-y-4">
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm font-medium text-gray-700">Active Status</span>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $selectedShop->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                                {{ $selectedShop->is_active ? 'Active' : 'Inactive' }}
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm font-medium text-gray-700">Approval Status</span>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                                {{ $selectedShop->status === 'approved' ? 'bg-green-100 text-green-800' : 
+                                                  ($selectedShop->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') }}">
+                                                {{ ucfirst($selectedShop->status) }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white p-6 rounded-lg shadow">
+                                    <h4 class="font-medium text-gray-900 mb-4">Quick Stats</h4>
+                                    
+                                    <div class="space-y-4">
+                                        <div>
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-sm font-medium text-gray-700">Products</span>
+                                                <span class="text-sm font-semibold text-gray-900">{{ $shopProducts ?? 0 }}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div>
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-sm font-medium text-gray-700">Categories</span>
+                                                <span class="text-sm font-semibold text-gray-900">{{ $categoriesCount ?? 0 }}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div>
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-sm font-medium text-gray-700">Staff Members</span>
+                                                <span class="text-sm font-semibold text-gray-900">{{ count($shopStaff ?? []) }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white p-6 rounded-lg shadow">
+                                    <h4 class="font-medium text-gray-900 mb-4">Shop Actions</h4>
+                                    
+                                    <div class="space-y-3">
+                                        <a href="{{ route('shop.details', ['shopId' => $selectedShop->id]) }}" class="w-full inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 justify-center">
+                                            Shop Details
+                                        </a>
+                                        
+                                        <a href="{{ route('shop.categories', ['shop' => $selectedShop->id]) }}" class="w-full inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 justify-center">
+                                            Manage Categories
+                                        </a>
+                                        
+                                        <a href="{{ route('shop.products', ['shop' => $selectedShop->id]) }}" class="w-full inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 justify-center">
+                                            Manage Products
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 @endif
             @else

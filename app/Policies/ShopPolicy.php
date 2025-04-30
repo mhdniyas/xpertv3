@@ -27,6 +27,36 @@ class ShopPolicy
     }
 
     /**
+     * Determine whether the user can manage products for this shop.
+     */
+    public function manageProducts(User $user, Shop $shop): bool
+    {
+        // Superadmin and admin can manage products for any shop
+        if ($user->isSuperadmin() || $user->isAdmin()) {
+            return true;
+        }
+        
+        // Shop owner can manage products for their shop
+        if ($shop->owner_id === $user->id) {
+            return true;
+        }
+        
+        // Shop staff with manager role can manage products
+        return $shop->staff()->where('user_id', $user->id)
+            ->where('role', 'manager')
+            ->exists();
+    }
+
+    /**
+     * Determine whether the user can manage categories for this shop.
+     */
+    public function manageCategories(User $user, Shop $shop): bool
+    {
+        // Use the same authorization logic as manageProducts
+        return $this->manageProducts($user, $shop);
+    }
+
+    /**
      * Determine whether the user can create models.
      */
     public function create(User $user): bool

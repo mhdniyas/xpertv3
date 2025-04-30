@@ -4,21 +4,21 @@
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-semibold text-gray-800">Category Management for {{ $shop->name }}</h2>
                 <div>
-                    <input 
-                        type="text" 
-                        wire:model.live="searchTerm" 
-                        placeholder="Search categories..." 
+                    <input
+                        type="text"
+                        wire:model.live="searchTerm"
+                        placeholder="Search categories..."
                         class="px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mr-2"
                     >
-                    <button 
-                        wire:click="editCategory" 
+                    <button
+                        wire:click="editCategory"
                         class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                         Add Category
                     </button>
                 </div>
             </div>
-            
+
             <!-- Categories List -->
             <div class="overflow-x-auto">
                 @if(count($shopCategories) > 0)
@@ -48,13 +48,13 @@
                                                             <span class="text-sm">{{ $childCategory['name'] }}</span>
                                                         </div>
                                                         <div>
-                                                            <button 
+                                                            <button
                                                                 wire:click="editCategory({{ $childCategory['id'] }})"
                                                                 class="text-xs text-blue-600 hover:text-blue-900 mr-2"
                                                             >
                                                                 Edit
                                                             </button>
-                                                            <button 
+                                                            <button
                                                                 wire:click="confirmDeleteCategory({{ $childCategory['id'] }})"
                                                                 class="text-xs text-red-600 hover:text-red-900"
                                                             >
@@ -80,28 +80,28 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <button 
-                                            wire:click="editCategory({{ $category['id'] }})" 
+                                        <button
+                                            wire:click="editCategory({{ $category['id'] }})"
                                             class="text-blue-600 hover:text-blue-900 mr-3"
                                         >
                                             Edit
                                         </button>
-                                        <button 
-                                            wire:click="confirmDeleteCategory({{ $category['id'] }})" 
+                                        <button
+                                            wire:click="confirmDeleteCategory({{ $category['id'] }})"
                                             class="text-red-600 hover:text-red-900 mr-3"
                                         >
                                             Delete
                                         </button>
                                         @if($category['status'] == 'active')
-                                            <button 
-                                                wire:click="updateCategoryStatus({{ $category['id'] }}, 'inactive')" 
+                                            <button
+                                                wire:click="updateCategoryStatus({{ $category['id'] }}, 'inactive')"
                                                 class="text-orange-600 hover:text-orange-900"
                                             >
                                                 Deactivate
                                             </button>
                                         @else
-                                            <button 
-                                                wire:click="updateCategoryStatus({{ $category['id'] }}, 'active')" 
+                                            <button
+                                                wire:click="updateCategoryStatus({{ $category['id'] }}, 'active')"
                                                 class="text-green-600 hover:text-green-900"
                                             >
                                                 Activate
@@ -131,37 +131,37 @@
                             {{ $categoryId ? 'Edit Category' : 'Create New Category' }}
                         </h3>
                     </div>
-                    
+
                     <div class="mb-4">
                         <label for="categoryName" class="block text-sm font-medium text-gray-700 mb-1">Category Name</label>
-                        <input 
-                            type="text" 
-                            id="categoryName" 
-                            wire:model="categoryName" 
+                        <input
+                            type="text"
+                            id="categoryName"
+                            wire:model="categoryName"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                             placeholder="Enter category name"
                         >
                         @error('categoryName') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
                     </div>
-                    
+
                     <div class="mb-4">
                         <label for="categoryDescription" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                        <textarea 
-                            id="categoryDescription" 
-                            wire:model="categoryDescription" 
-                            rows="3" 
+                        <textarea
+                            id="categoryDescription"
+                            wire:model="categoryDescription"
+                            rows="3"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                             placeholder="Enter category description"
                         ></textarea>
                         @error('categoryDescription') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
                     </div>
-                    
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                             <label for="parentCategoryId" class="block text-sm font-medium text-gray-700 mb-1">Parent Category</label>
-                            <select 
-                                id="parentCategoryId" 
-                                wire:model="parentCategoryId" 
+                            <select
+                                id="parentCategoryId"
+                                wire:model="parentCategoryId"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                             >
                                 <option value="">None (Top Level)</option>
@@ -171,12 +171,12 @@
                             </select>
                             @error('parentCategoryId') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
                         </div>
-                        
+
                         <div>
                             <label for="selectedGlobalCategory" class="block text-sm font-medium text-gray-700 mb-1">Global Category Mapping</label>
-                            <select 
-                                id="selectedGlobalCategory" 
-                                wire:model="selectedGlobalCategory" 
+                            <select
+                                id="selectedGlobalCategory"
+                                wire:model="selectedGlobalCategory"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                             >
                                 <option value="">None</option>
@@ -187,12 +187,12 @@
                             @error('selectedGlobalCategory') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
                         </div>
                     </div>
-                    
+
                     <div class="mb-4">
                         <label for="categoryStatus" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                        <select 
-                            id="categoryStatus" 
-                            wire:model="categoryStatus" 
+                        <select
+                            id="categoryStatus"
+                            wire:model="categoryStatus"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                         >
                             <option value="active">Active</option>
@@ -201,18 +201,18 @@
                         @error('categoryStatus') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
                     </div>
                 </div>
-                
+
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button 
-                        wire:click="saveCategory" 
-                        type="button" 
+                    <button
+                        wire:click="saveCategory"
+                        type="button"
                         class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
                     >
                         {{ $categoryId ? 'Update Category' : 'Create Category' }}
                     </button>
-                    <button 
-                        wire:click="cancelCategoryEdit" 
-                        type="button" 
+                    <button
+                        wire:click="cancelCategoryEdit"
+                        type="button"
                         class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                     >
                         Cancel
@@ -246,16 +246,16 @@
                     </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button 
-                        wire:click="deleteCategory" 
-                        type="button" 
+                    <button
+                        wire:click="deleteCategory"
+                        type="button"
                         class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
                     >
                         Delete
                     </button>
-                    <button 
-                        wire:click="cancelDeleteCategory" 
-                        type="button" 
+                    <button
+                        wire:click="cancelDeleteCategory"
+                        type="button"
                         class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                     >
                         Cancel
