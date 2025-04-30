@@ -1,16 +1,16 @@
 <div>
-    <div class="bg-white rounded-lg shadow overflow-hidden">
+    <div class="overflow-hidden rounded-lg shadow-lg card">
         <div class="p-6">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">Shop Management</h2>
+            <h2 class="mb-6 text-2xl font-bold text-gray-800">Shop Management</h2>
 
             <!-- Shop Selector -->
             <div class="mb-6">
-                <label for="shop-selector" class="block text-sm font-medium text-gray-700 mb-2">Select a Shop</label>
+                <label for="shop-selector" class="block mb-2 text-sm font-medium text-gray-700">Select a Shop</label>
                 <select
                     id="shop-selector"
                     wire:model.live="selectedShopId"
                     wire:change="selectShop($event.target.value)"
-                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
+                    class="block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"
                 >
                     <option value="">-- Select a Shop --</option>
                     @foreach($userShops as $shop)
@@ -21,7 +21,7 @@
 
             @if($selectedShop)
                 <!-- Shop Details Navigation -->
-                <div class="border-b border-gray-200 mb-6">
+                <div class="mb-6 border-b border-gray-200">
                     <nav class="flex -mb-px space-x-6">
                         <a href="#"
                             wire:click.prevent="setShopDetailView('overview')"
@@ -65,12 +65,12 @@
                 <!-- Shop Details Content -->
                 @if($shopDetailView === 'overview')
                     <div>
-                        <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
+                        <div class="mb-6 overflow-hidden bg-white shadow-lg card sm:rounded-lg">
                             <div class="px-4 py-5 sm:px-6 bg-gray-50">
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <h3 class="text-lg leading-6 font-medium text-gray-900">{{ $selectedShop->name }}</h3>
-                                        <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                                        <h3 class="text-lg font-medium leading-6 text-gray-900">{{ $selectedShop->name }}</h3>
+                                        <p class="max-w-2xl mt-1 text-sm text-gray-500">
                                             @if($selectedShop->status === 'approved')
                                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                                     Approved
@@ -97,12 +97,12 @@
                                         </p>
                                     </div>
                                     <div>
-                                        <a href="#" wire:click.prevent="toggleShopManager({{ $selectedShop->id }})" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                        <a href="#" wire:click.prevent="toggleShopManager({{ $selectedShop->id }})" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                             Edit Shop
                                         </a>
                                     </div>
                                     <div>
-                                        <a href="{{ route('shop.manager', ['shopId' => $selectedShop->id]) }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                        <a href="{{ route('shop.manager', ['shopId' => $selectedShop->id]) }}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                             Open Shop Manager
                                         </a>
                                     </div>
@@ -110,22 +110,22 @@
                             </div>
                             <div class="border-t border-gray-200">
                                 <dl>
-                                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                    <div class="px-4 py-5 bg-gray-50 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                                         <dt class="text-sm font-medium text-gray-500">Owner</dt>
                                         <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ $selectedShop->owner->name }}</dd>
                                     </div>
-                                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                    <div class="px-4 py-5 bg-white sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                                         <dt class="text-sm font-medium text-gray-500">Address</dt>
                                         <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ $selectedShop->address ?: 'Not specified' }}</dd>
                                     </div>
-                                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                    <div class="px-4 py-5 bg-gray-50 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                                         <dt class="text-sm font-medium text-gray-500">Contact</dt>
                                         <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                                             Phone: {{ $selectedShop->phone ?: 'Not specified' }}<br>
                                             Email: {{ $selectedShop->email ?: 'Not specified' }}
                                         </dd>
                                     </div>
-                                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                    <div class="px-4 py-5 bg-white sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                                         <dt class="text-sm font-medium text-gray-500">Description</dt>
                                         <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ $selectedShop->description ?: 'No description provided' }}</dd>
                                     </div>
@@ -134,17 +134,17 @@
                         </div>
 
                         <!-- Shop Stats -->
-                        <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                        <div class="grid grid-cols-1 gap-5 mt-6 sm:grid-cols-2 lg:grid-cols-3">
                             <!-- Products Count -->
-                            <div class="bg-white overflow-hidden shadow rounded-lg">
+                            <div class="overflow-hidden bg-white rounded-lg shadow-lg card">
                                 <div class="p-5">
                                     <div class="flex items-center">
-                                        <div class="flex-shrink-0 bg-blue-500 rounded-md p-3">
-                                            <svg class="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <div class="flex-shrink-0 p-3 bg-blue-500 rounded-md">
+                                            <svg class="w-6 h-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0v10l-8 4m0-10L4 7m8 4v10" />
                                             </svg>
                                         </div>
-                                        <div class="ml-5 w-0 flex-1">
+                                        <div class="flex-1 w-0 ml-5">
                                             <dl>
                                                 <dt class="text-sm font-medium text-gray-500 truncate">Total Products</dt>
                                                 <dd>
@@ -154,7 +154,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="bg-gray-50 px-5 py-3">
+                                <div class="px-5 py-3 bg-gray-50">
                                     <div class="text-sm">
                                         <a href="#" wire:click.prevent="setShopDetailView('inventory')" class="font-medium text-blue-700 hover:text-blue-900">
                                             View inventory
@@ -164,15 +164,15 @@
                             </div>
 
                             <!-- Sales Card -->
-                            <div class="bg-white overflow-hidden shadow rounded-lg">
+                            <div class="overflow-hidden bg-white rounded-lg shadow-lg card">
                                 <div class="p-5">
                                     <div class="flex items-center">
-                                        <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
-                                            <svg class="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <div class="flex-shrink-0 p-3 bg-green-500 rounded-md">
+                                            <svg class="w-6 h-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
                                         </div>
-                                        <div class="ml-5 w-0 flex-1">
+                                        <div class="flex-1 w-0 ml-5">
                                             <dl>
                                                 <dt class="text-sm font-medium text-gray-500 truncate">Total Sales ({{ $shopSales['period'] ?? '30 days' }})</dt>
                                                 <dd>
@@ -182,7 +182,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="bg-gray-50 px-5 py-3">
+                                <div class="px-5 py-3 bg-gray-50">
                                     <div class="text-sm">
                                         <a href="#" wire:click.prevent="setShopDetailView('sales')" class="font-medium text-blue-700 hover:text-blue-900">
                                             View sales details
@@ -192,16 +192,16 @@
                             </div>
 
                             <!-- Visits Card -->
-                            <div class="bg-white overflow-hidden shadow rounded-lg">
+                            <div class="overflow-hidden bg-white rounded-lg shadow-lg card">
                                 <div class="p-5">
                                     <div class="flex items-center">
-                                        <div class="flex-shrink-0 bg-purple-500 rounded-md p-3">
-                                            <svg class="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <div class="flex-shrink-0 p-3 bg-purple-500 rounded-md">
+                                            <svg class="w-6 h-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                             </svg>
                                         </div>
-                                        <div class="ml-5 w-0 flex-1">
+                                        <div class="flex-1 w-0 ml-5">
                                             <dl>
                                                 <dt class="text-sm font-medium text-gray-500 truncate">Total Visits (Last 30 days)</dt>
                                                 <dd>
@@ -211,7 +211,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="bg-gray-50 px-5 py-3">
+                                <div class="px-5 py-3 bg-gray-50">
                                     <div class="text-sm">
                                         <a href="#" class="font-medium text-blue-700 hover:text-blue-900">
                                             View analytics
@@ -223,22 +223,22 @@
                     </div>
                 @elseif($shopDetailView === 'inventory')
                     <div>
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Inventory Management</h3>
+                        <h3 class="mb-4 text-lg font-medium text-gray-900">Inventory Management</h3>
 
                         <!-- Quick Add Product Form -->
-                        <div class="bg-white p-4 mb-6 rounded-lg shadow">
-                            <h4 class="font-medium text-gray-900 mb-3">Add New Product</h4>
+                        <div class="p-4 mb-6 bg-white rounded-lg shadow-lg card">
+                            <h4 class="mb-3 font-medium text-gray-900">Add New Product</h4>
                             <form wire:submit.prevent="saveProduct">
-                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                                <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2 lg:grid-cols-3">
                                     <div>
                                         <label for="productName" class="block text-sm font-medium text-gray-700">Product Name</label>
-                                        <input type="text" wire:model="productName" id="productName" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
-                                        @error('productName') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                        <input type="text" wire:model="productName" id="productName" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                                        @error('productName') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                                     </div>
 
                                     <div>
                                         <label for="productCategoryId" class="block text-sm font-medium text-gray-700">Category</label>
-                                        <select wire:model="productCategoryId" id="productCategoryId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                                        <select wire:model="productCategoryId" id="productCategoryId" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
                                             <option value="">Select Category</option>
                                             @forelse($shopCategories ?? [] as $catId => $category)
                                                 <option value="{{ $catId }}">{{ $category['name'] }}</option>
@@ -251,52 +251,52 @@
                                                 <option disabled>No categories available</option>
                                             @endforelse
                                         </select>
-                                        @error('productCategoryId') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                        @error('productCategoryId') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                                     </div>
 
                                     <div>
                                         <label for="productPrice" class="block text-sm font-medium text-gray-700">Price</label>
-                                        <div class="mt-1 relative rounded-md shadow-sm">
-                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <div class="relative mt-1 rounded-md shadow-sm">
+                                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                                 <span class="text-gray-500 sm:text-sm">$</span>
                                             </div>
-                                            <input type="number" wire:model="productPrice" id="productPrice" step="0.01" min="0" class="pl-7 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                                            <input type="number" wire:model="productPrice" id="productPrice" step="0.01" min="0" class="block w-full border-gray-300 rounded-md shadow-sm pl-7 focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
                                         </div>
-                                        @error('productPrice') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                        @error('productPrice') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
 
                                 <div class="mb-4">
                                     <label for="productDescription" class="block text-sm font-medium text-gray-700">Description</label>
-                                    <textarea wire:model="productDescription" id="productDescription" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"></textarea>
-                                    @error('productDescription') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                    <textarea wire:model="productDescription" id="productDescription" rows="3" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"></textarea>
+                                    @error('productDescription') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                                 </div>
 
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-3">
                                     <div>
                                         <label for="productStock" class="block text-sm font-medium text-gray-700">Stock Quantity</label>
-                                        <input type="number" wire:model="productStock" id="productStock" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
-                                        @error('productStock') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                        <input type="number" wire:model="productStock" id="productStock" min="0" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                                        @error('productStock') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                                     </div>
 
                                     <div>
                                         <label for="productStatus" class="block text-sm font-medium text-gray-700">Status</label>
-                                        <select wire:model="productStatus" id="productStatus" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                                        <select wire:model="productStatus" id="productStatus" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
                                             <option value="active">Active</option>
                                             <option value="inactive">Inactive</option>
                                         </select>
-                                        @error('productStatus') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                        @error('productStatus') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                                     </div>
 
                                     <div>
                                         <label for="productUnit" class="block text-sm font-medium text-gray-700">Unit</label>
-                                        <input type="text" wire:model="productUnit" id="productUnit" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" placeholder="piece, kg, liter, etc.">
-                                        @error('productUnit') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                        <input type="text" wire:model="productUnit" id="productUnit" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" placeholder="piece, kg, liter, etc.">
+                                        @error('productUnit') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
 
                                 <div class="flex items-center justify-end">
-                                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                         Add Product
                                     </button>
                                 </div>
@@ -304,10 +304,10 @@
                         </div>
 
                         @if(empty($productsByCategory))
-                            <div class="bg-yellow-50 p-4 rounded-md">
+                            <div class="p-4 rounded-md bg-yellow-50">
                                 <div class="flex">
                                     <div class="flex-shrink-0">
-                                        <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <svg class="w-5 h-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                             <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                                         </svg>
                                     </div>
@@ -319,10 +319,10 @@
                                 </div>
                             </div>
                         @else
-                            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                            <div class="grid grid-cols-1 gap-4 lg:grid-cols-4">
                                 <!-- Categories sidebar -->
-                                <div class="col-span-1 bg-gray-50 p-4 rounded-lg">
-                                    <h4 class="font-medium text-gray-700 mb-3">Categories</h4>
+                                <div class="col-span-1 p-4 rounded-lg shadow-lg card bg-gray-50">
+                                    <h4 class="mb-3 font-medium text-gray-700">Categories</h4>
                                     <nav class="space-y-1">
                                         @foreach($productsByCategory as $catId => $category)
                                             <a href="#"
@@ -341,24 +341,24 @@
                                 <!-- Products table -->
                                 <div class="col-span-1 lg:col-span-3">
                                     @if($selectedCategoryId && isset($productsByCategory[$selectedCategoryId]))
-                                        <div class="overflow-x-auto">
+                                        <div class="overflow-x-auto shadow-lg card">
                                             <table class="min-w-full divide-y divide-gray-200">
                                                 <thead class="bg-gray-50">
                                                     <tr>
-                                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                                        <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Product</th>
+                                                        <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Description</th>
+                                                        <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Price</th>
+                                                        <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Stock</th>
+                                                        <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Status</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody class="bg-white divide-y divide-gray-200">
                                                     @foreach($productsByCategory[$selectedCategoryId]['products'] as $product)
-                                                        <tr>
-                                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $product->name }}</td>
+                                                        <tr class="cursor-pointer hover:bg-gray-50" onclick="window.location.href='{{ route('shop.product.show', ['shopSlug' => $selectedShop->slug, 'productSlug' => $product->slug]) }}'">
+                                                            <td class="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">{{ $product->name }}</td>
                                                             <td class="px-6 py-4 text-sm text-gray-500">{{ \Illuminate\Support\Str::limit($product->description, 50) }}</td>
-                                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${{ number_format($product->price, 2) }}</td>
-                                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $product->stock }}</td>
+                                                            <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">${{ number_format($product->price, 2) }}</td>
+                                                            <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{{ $product->stock }}</td>
                                                             <td class="px-6 py-4 whitespace-nowrap">
                                                                 @if($product->status === 'active')
                                                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -376,7 +376,7 @@
                                             </table>
                                         </div>
                                     @else
-                                        <div class="bg-gray-50 p-4 text-center rounded-md">
+                                        <div class="p-4 text-center rounded-md shadow-lg card bg-gray-50">
                                             <p class="text-gray-600">Select a category to view products</p>
                                         </div>
                                     @endif
@@ -386,13 +386,13 @@
                     </div>
                 @elseif($shopDetailView === 'categories')
                     <div>
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Categories Management</h3>
+                        <h3 class="mb-4 text-lg font-medium text-gray-900">Categories Management</h3>
 
                         @if(empty($shopCategories))
-                            <div class="bg-yellow-50 p-4 rounded-md">
+                            <div class="p-4 rounded-md bg-yellow-50">
                                 <div class="flex">
                                     <div class="flex-shrink-0">
-                                        <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <svg class="w-5 h-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                             <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                                         </svg>
                                     </div>
@@ -404,16 +404,16 @@
                                 </div>
                             </div>
                         @else
-                            <div class="bg-white shadow overflow-hidden sm:rounded-md">
+                            <div class="overflow-hidden bg-white shadow-lg card sm:rounded-md">
                                 <ul class="divide-y divide-gray-200">
                                     @foreach($shopCategories as $categoryId => $category)
                                         <li>
-                                            <div class="px-4 py-4 flex items-center sm:px-6">
-                                                <div class="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between">
+                                            <div class="flex items-center px-4 py-4 sm:px-6">
+                                                <div class="flex-1 min-w-0 sm:flex sm:items-center sm:justify-between">
                                                     <div>
                                                         <div class="flex text-sm">
                                                             <p class="font-medium text-blue-600 truncate">{{ $category['name'] }}</p>
-                                                            <p class="ml-1 flex-shrink-0 font-normal text-gray-500">
+                                                            <p class="flex-shrink-0 ml-1 font-normal text-gray-500">
                                                                 ({{ $category['product_count'] }} products)
                                                             </p>
                                                         </div>
@@ -425,25 +425,30 @@
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div class="mt-4 flex-shrink-0 sm:mt-0 sm:ml-5">
+                                                    <div class="flex-shrink-0 mt-4 sm:mt-0 sm:ml-5">
                                                         <div class="flex justify-end space-x-3">
                                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $category['status'] === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                                                 {{ ucfirst($category['status']) }}
                                                             </span>
+                                                            <!-- View Products Button -->
+                                                            <button wire:click="setShopDetailView('inventory'); selectCategory({{ $categoryId }})" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200">
+                                                                View Products
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="ml-5 flex-shrink-0">
-                                                    <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                <!-- Remove onClick - keep only the icon for visual cue -->
+                                                <div class="flex-shrink-0 ml-5">
+                                                    <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                                         <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                                                     </svg>
                                                 </div>
                                             </div>
 
                                             @if(!empty($category['children']))
-                                                <div class="pl-8 pb-4">
-                                                    <h4 class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Subcategories</h4>
-                                                    <ul class="border-l-2 border-gray-200 space-y-2">
+                                                <div class="pb-4 pl-8">
+                                                    <h4 class="mb-2 text-xs font-medium tracking-wider text-gray-500 uppercase">Subcategories</h4>
+                                                    <ul class="space-y-2 border-l-2 border-gray-200">
                                                         @foreach($category['children'] as $childId => $childCategory)
                                                             <li class="pl-4 -ml-px border-l-2 border-gray-200">
                                                                 <div class="flex items-center justify-between text-sm">
@@ -468,12 +473,12 @@
                     </div>
                 @elseif($shopDetailView === 'sales')
                     <div>
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Sales Analytics</h3>
+                        <h3 class="mb-4 text-lg font-medium text-gray-900">Sales Analytics</h3>
 
-                        <div class="bg-yellow-50 p-4 rounded-md">
+                        <div class="p-4 rounded-md bg-yellow-50">
                             <div class="flex">
                                 <div class="flex-shrink-0">
-                                    <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <svg class="w-5 h-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                         <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                                     </svg>
                                 </div>
@@ -487,38 +492,38 @@
                     </div>
                 @elseif($shopDetailView === 'staff')
                     <div>
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Staff Management</h3>
+                        <h3 class="mb-4 text-lg font-medium text-gray-900">Staff Management</h3>
 
-                        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                        <div class="overflow-hidden bg-white shadow-lg card sm:rounded-lg">
                             <div class="p-4 bg-gray-50">
-                                <h4 class="font-medium text-gray-700 mb-3">Add Staff Member</h4>
+                                <h4 class="mb-3 font-medium text-gray-700">Add Staff Member</h4>
                                 <form wire:submit.prevent="assignStaff">
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                                         <!-- User selection -->
                                         <div>
                                             <label for="selectedUserId" class="block text-sm font-medium text-gray-700">User</label>
-                                            <select id="selectedUserId" wire:model="selectedUserId" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                            <select id="selectedUserId" wire:model="selectedUserId" class="block w-full py-2 pl-3 pr-10 mt-1 text-base border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                                                 <option value="">Select User</option>
                                                 @foreach($users ?? [] as $user)
                                                     <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->role->name }})</option>
                                                 @endforeach
                                             </select>
-                                            @error('selectedUserId') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                            @error('selectedUserId') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                                         </div>
 
                                         <!-- Role selection -->
                                         <div>
                                             <label for="selectedRole" class="block text-sm font-medium text-gray-700">Role</label>
-                                            <select id="selectedRole" wire:model="selectedRole" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                            <select id="selectedRole" wire:model="selectedRole" class="block w-full py-2 pl-3 pr-10 mt-1 text-base border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                                                 @foreach($roles ?? ['staff', 'manager'] as $role)
                                                     <option value="{{ $role }}">{{ ucfirst($role) }}</option>
                                                 @endforeach
                                             </select>
-                                            @error('selectedRole') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                            @error('selectedRole') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
                                     <div class="mt-4">
-                                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                             Add Staff Member
                                         </button>
                                     </div>
@@ -527,14 +532,14 @@
 
                             <!-- Staff list -->
                             <div class="px-4 py-4">
-                                <h4 class="font-medium text-gray-700 mb-3">Current Staff</h4>
+                                <h4 class="mb-3 font-medium text-gray-700">Current Staff</h4>
                                 <div class="overflow-hidden border-b border-gray-200 sm:rounded-lg">
                                     <table class="min-w-full divide-y divide-gray-200">
                                         <thead class="bg-gray-50">
                                             <tr>
-                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                                <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">User</th>
+                                                <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Role</th>
+                                                <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody class="bg-white divide-y divide-gray-200">
@@ -542,11 +547,11 @@
                                                 <tr>
                                                     <td class="px-6 py-4 whitespace-nowrap">
                                                         <div class="flex items-center">
-                                                            <div class="h-10 w-10 flex-shrink-0 rounded-full bg-gray-100 overflow-hidden">
+                                                            <div class="flex-shrink-0 w-10 h-10 overflow-hidden bg-gray-100 rounded-full">
                                                                 @if($staff->photo)
-                                                                    <img src="{{ Storage::url($staff->photo) }}" alt="{{ $staff->name }}" class="h-10 w-10 object-cover">
+                                                                    <img src="{{ Storage::url($staff->photo) }}" alt="{{ $staff->name }}" class="object-cover w-10 h-10">
                                                                 @else
-                                                                    <svg class="h-10 w-10 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                                                                    <svg class="w-10 h-10 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
                                                                         <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
                                                                     </svg>
                                                                 @endif
@@ -557,7 +562,7 @@
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                                                         <div class="flex items-center">
                                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $staff->role === 'manager' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800' }}">
                                                                 {{ is_string($staff->role) ? ucfirst($staff->role) : 'Staff' }}
@@ -579,13 +584,13 @@
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                    <td class="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
                                                         <button wire:click="confirmRemoveStaff({{ $staff->id }})" class="text-red-600 hover:text-red-900">Remove</button>
                                                     </td>
                                                 </tr>
                                             @empty
                                                 <tr>
-                                                    <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">
+                                                    <td colspan="3" class="px-6 py-4 text-sm text-center text-gray-500">
                                                         No staff members assigned to this shop yet.
                                                     </td>
                                                 </tr>
@@ -598,34 +603,34 @@
                     </div>
                 @elseif($shopDetailView === 'manager')
                     <div>
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Shop Manager</h3>
+                        <h3 class="mb-4 text-lg font-medium text-gray-900">Shop Manager</h3>
 
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
                             <!-- Staff Management Section -->
-                            <div class="col-span-1 md:col-span-2 bg-white p-6 rounded-lg shadow">
-                                <h4 class="font-medium text-gray-900 mb-4">Staff Management</h4>
+                            <div class="col-span-1 p-6 bg-white rounded-lg shadow-lg card md:col-span-2">
+                                <h4 class="mb-4 font-medium text-gray-900">Staff Management</h4>
 
                                 <form wire:submit.prevent="assignStaff" class="mb-6">
                                     <div class="mb-4">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Search Users</label>
-                                        <div class="mt-1 relative rounded-md shadow-sm">
-                                            <input type="text" wire:model.debounce.300ms="searchTerm" class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-3 pr-12 sm:text-sm border-gray-300 rounded-md" placeholder="Search by name or email...">
+                                        <label class="block mb-1 text-sm font-medium text-gray-700">Search Users</label>
+                                        <div class="relative mt-1 rounded-md shadow-sm">
+                                            <input type="text" wire:model.debounce.300ms="searchTerm" class="block w-full pl-3 pr-12 border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Search by name or email...">
                                         </div>
                                     </div>
 
                                     <div class="mb-4">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Available Users</label>
+                                        <label class="block mb-1 text-sm font-medium text-gray-700">Available Users</label>
                                         @if($availableUsers->isEmpty())
-                                            <p class="text-sm text-gray-500 italic">No available users found. Try searching for users.</p>
+                                            <p class="text-sm italic text-gray-500">No available users found. Try searching for users.</p>
                                         @else
-                                            <div class="mt-1 border border-gray-300 rounded-md max-h-48 overflow-y-auto">
+                                            <div class="mt-1 overflow-y-auto border border-gray-300 rounded-md max-h-48">
                                                 @foreach($availableUsers as $user)
-                                                    <div class="px-4 py-2 hover:bg-gray-50 flex items-center justify-between border-b border-gray-200 last:border-0">
+                                                    <div class="flex items-center justify-between px-4 py-2 border-b border-gray-200 hover:bg-gray-50 last:border-0">
                                                         <div>
                                                             <div class="text-sm font-medium text-gray-900">{{ $user->name }}</div>
                                                             <div class="text-sm text-gray-500">{{ $user->email }}</div>
                                                         </div>
-                                                        <button type="button" wire:click="$set('selectedUserId', '{{ $user->id }}')" class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                                                        <button type="button" wire:click="$set('selectedUserId', '{{ $user->id }}')" class="px-3 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded-full">
                                                             Select
                                                         </button>
                                                     </div>
@@ -634,58 +639,58 @@
                                         @endif
                                     </div>
 
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                                         <div>
                                             <label for="selectedUserId" class="block text-sm font-medium text-gray-700">Selected User</label>
-                                            <select id="selectedUserId" wire:model="selectedUserId" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                            <select id="selectedUserId" wire:model="selectedUserId" class="block w-full py-2 pl-3 pr-10 mt-1 text-base border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                                                 <option value="">Choose a user</option>
                                                 @foreach($availableUsers as $user)
                                                     <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</option>
                                                 @endforeach
                                             </select>
-                                            @error('selectedUserId') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                            @error('selectedUserId') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                                         </div>
 
                                         <div>
                                             <label for="selectedRole" class="block text-sm font-medium text-gray-700">Role</label>
-                                            <select id="selectedRole" wire:model="selectedRole" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                            <select id="selectedRole" wire:model="selectedRole" class="block w-full py-2 pl-3 pr-10 mt-1 text-base border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                                                 <option value="staff">Staff</option>
                                                 <option value="manager">Manager</option>
                                             </select>
-                                            @error('selectedRole') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+                                            @error('selectedRole') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
 
                                     <div class="mt-4">
-                                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                        <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                             Add Staff Member
                                         </button>
                                     </div>
                                 </form>
 
                                 <!-- Current Staff List -->
-                                <h5 class="font-medium text-gray-700 mb-2 mt-8">Current Staff</h5>
-                                <div class="bg-white shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                                <h5 class="mt-8 mb-2 font-medium text-gray-700">Current Staff</h5>
+                                <div class="overflow-hidden bg-white border-b border-gray-200 shadow sm:rounded-lg">
                                     <table class="min-w-full divide-y divide-gray-200">
                                         <thead class="bg-gray-50">
                                             <tr>
-                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Added By</th>
-                                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                                <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Name</th>
+                                                <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Email</th>
+                                                <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Role</th>
+                                                <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Added By</th>
+                                                <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody class="bg-white divide-y divide-gray-200">
                                             @forelse($shopStaff as $staff)
                                                 <tr>
-                                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                    <td class="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
                                                         {{ $staff->name }}
                                                     </td>
-                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                                                         {{ $staff->email }}
                                                     </td>
-                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                                                         <div class="flex items-center">
                                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $staff->role === 'manager' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800' }}">
                                                                 {{ is_string($staff->role) ? ucfirst($staff->role) : 'Staff' }}
@@ -707,10 +712,10 @@
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                                                         {{ $staff->added_by_name }}
                                                     </td>
-                                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                    <td class="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
                                                         <button type="button" wire:click="confirmRemoveStaff('{{ $staff->id }}')" class="text-red-600 hover:text-red-900">
                                                             Remove
                                                         </button>
@@ -718,7 +723,7 @@
                                                 </tr>
                                             @empty
                                                 <tr>
-                                                    <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                                                    <td colspan="5" class="px-6 py-4 text-sm text-center text-gray-500 whitespace-nowrap">
                                                         No staff members assigned to this shop.
                                                     </td>
                                                 </tr>
@@ -730,18 +735,18 @@
 
                             <!-- Shop Settings Section -->
                             <div class="col-span-1 space-y-6">
-                                <div class="bg-white p-6 rounded-lg shadow">
-                                    <h4 class="font-medium text-gray-900 mb-4">Shop Status</h4>
+                                <div class="p-6 bg-white rounded-lg shadow-lg card">
+                                    <h4 class="mb-4 font-medium text-gray-900">Shop Status</h4>
 
                                     <div class="space-y-4">
-                                        <div class="flex justify-between items-center">
+                                        <div class="flex items-center justify-between">
                                             <span class="text-sm font-medium text-gray-700">Active Status</span>
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $selectedShop->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                                 {{ $selectedShop->is_active ? 'Active' : 'Inactive' }}
                                             </span>
                                         </div>
 
-                                        <div class="flex justify-between items-center">
+                                        <div class="flex items-center justify-between">
                                             <span class="text-sm font-medium text-gray-700">Approval Status</span>
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                                 {{ $selectedShop->status === 'approved' ? 'bg-green-100 text-green-800' :
@@ -752,26 +757,26 @@
                                     </div>
                                 </div>
 
-                                <div class="bg-white p-6 rounded-lg shadow">
-                                    <h4 class="font-medium text-gray-900 mb-4">Quick Stats</h4>
+                                <div class="p-6 bg-white rounded-lg shadow-lg card">
+                                    <h4 class="mb-4 font-medium text-gray-900">Quick Stats</h4>
 
                                     <div class="space-y-4">
                                         <div>
-                                            <div class="flex justify-between items-center">
+                                            <div class="flex items-center justify-between">
                                                 <span class="text-sm font-medium text-gray-700">Products</span>
                                                 <span class="text-sm font-semibold text-gray-900">{{ $shopProducts ?? 0 }}</span>
                                             </div>
                                         </div>
 
                                         <div>
-                                            <div class="flex justify-between items-center">
+                                            <div class="flex items-center justify-between">
                                                 <span class="text-sm font-medium text-gray-700">Categories</span>
                                                 <span class="text-sm font-semibold text-gray-900">{{ $categoriesCount ?? 0 }}</span>
                                             </div>
                                         </div>
 
                                         <div>
-                                            <div class="flex justify-between items-center">
+                                            <div class="flex items-center justify-between">
                                                 <span class="text-sm font-medium text-gray-700">Staff Members</span>
                                                 <span class="text-sm font-semibold text-gray-900">{{ count($shopStaff ?? []) }}</span>
                                             </div>
@@ -779,19 +784,19 @@
                                     </div>
                                 </div>
 
-                                <div class="bg-white p-6 rounded-lg shadow">
-                                    <h4 class="font-medium text-gray-900 mb-4">Shop Actions</h4>
+                                <div class="p-6 bg-white rounded-lg shadow-lg card">
+                                    <h4 class="mb-4 font-medium text-gray-900">Shop Actions</h4>
 
                                     <div class="space-y-3">
-                                        <a href="{{ route('shop.details', ['shopId' => $selectedShop->id]) }}" class="w-full inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 justify-center">
+                                        <a href="{{ route('shop.details', ['shopId' => $selectedShop->id]) }}" class="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                             Shop Details
                                         </a>
 
-                                        <a href="{{ route('shop.categories', ['shop' => $selectedShop->id]) }}" class="w-full inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 justify-center">
+                                        <a href="{{ route('shop.categories', ['shop' => $selectedShop->id]) }}" class="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                             Manage Categories
                                         </a>
 
-                                        <a href="{{ route('shop.products', ['shop' => $selectedShop->id]) }}" class="w-full inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 justify-center">
+                                        <a href="{{ route('shop.products', ['shop' => $selectedShop->id]) }}" class="inline-flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                                             Manage Products
                                         </a>
                                     </div>
@@ -801,10 +806,10 @@
                     </div>
                 @endif
             @else
-                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                <div class="p-4 border-l-4 border-yellow-400 bg-yellow-50">
                     <div class="flex">
                         <div class="flex-shrink-0">
-                            <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <svg class="w-5 h-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                 <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                             </svg>
                         </div>
@@ -814,7 +819,7 @@
                                     You don't have any shops yet. Please create a shop first.
 
                                     @if($currentUser->isAdmin() || $currentUser->isSuperadmin())
-                                        <a href="#" class="font-medium underline text-yellow-700 hover:text-yellow-600">
+                                        <a href="#" class="font-medium text-yellow-700 underline hover:text-yellow-600">
                                             Create Shop
                                         </a>
                                     @endif
@@ -831,20 +836,20 @@
 
     <!-- Staff Removal Confirmation Modal -->
     @if($staffToRemove)
-    <div class="fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+    <div class="fixed inset-0 z-10 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" aria-hidden="true"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div class="inline-block overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl card sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="px-4 pt-5 pb-4 bg-white sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
-                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-                            <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <div class="flex items-center justify-center flex-shrink-0 w-12 h-12 mx-auto bg-red-100 rounded-full sm:mx-0 sm:h-10 sm:w-10">
+                            <svg class="w-6 h-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
                         </div>
                         <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                            <h3 class="text-lg font-medium leading-6 text-gray-900" id="modal-title">
                                 Remove Staff Member
                             </h3>
                             <div class="mt-2">
@@ -855,11 +860,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button wire:click="removeStaff" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                <div class="px-4 py-3 bg-gray-50 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button wire:click="removeStaff" type="button" class="inline-flex justify-center w-full px-4 py-2 text-base font-medium text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
                         Remove
                     </button>
-                    <button wire:click="$set('staffToRemove', null)" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    <button wire:click="$set('staffToRemove', null)" type="button" class="inline-flex justify-center w-full px-4 py-2 mt-3 text-base font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                         Cancel
                     </button>
                 </div>
