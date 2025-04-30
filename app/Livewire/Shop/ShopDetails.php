@@ -31,14 +31,6 @@ class ShopDetails extends Component
     public $categoriesCount = 0;
     public $categoryProducts = [];
 
-    // For staff management
-    public $selectedUserId;
-    public $selectedRole = 'staff';
-    public $staffMembers = [];
-    public $users = [];
-    public $roles = ['staff', 'manager'];
-    public $staffToRemove = null;
-
     // Product form properties
     public $productName;
     public $productDescription;
@@ -56,6 +48,10 @@ class ShopDetails extends Component
     protected $queryString = [
         'selectedShopId' => ['except' => null],
         'shopDetailView' => ['except' => 'overview'],
+    ];
+
+    protected $listeners = [
+        'refreshShopData' => 'loadShopDetails'
     ];
 
     public function mount($shopId = null)
@@ -96,9 +92,6 @@ class ShopDetails extends Component
                 $this->loadShopInventory();
             } elseif ($this->shopDetailView === 'categories' && empty($this->shopCategories)) {
                 $this->loadShopCategories();
-            } elseif ($this->shopDetailView === 'staff' && empty($this->staffMembers)) {
-                $this->loadStaffMembers();
-                $this->loadAvailableUsers();
             }
         }
 
@@ -109,10 +102,7 @@ class ShopDetails extends Component
             'shopDetailView' => $this->shopDetailView,
             'productsByCategory' => $this->productsByCategory,
             'shopCategories' => $this->shopCategories,
-            'selectedCategoryId' => $this->selectedCategoryId,
-            'staffMembers' => $this->staffMembers,
-            'users' => $this->users,
-            'roles' => $this->roles
+            'selectedCategoryId' => $this->selectedCategoryId
         ]);
     }
 
@@ -140,9 +130,6 @@ class ShopDetails extends Component
             $this->loadShopInventory();
         } elseif ($view === 'categories' && empty($this->shopCategories)) {
             $this->loadShopCategories();
-        } elseif ($view === 'staff') {
-            $this->loadStaffMembers();
-            $this->loadAvailableUsers();
         }
     }
 
@@ -353,114 +340,6 @@ class ShopDetails extends Component
     {
         $this->showShopManager = false;
         $this->shopDetailView = 'overview';
-    }
-
-    /**
-     * Load staff members for the selected shop
-     */
-    public function loadStaffMembers()
-    {
-        if (!$this->selectedShopId) {
-            return;
-        }
-
-        $shop = Shop::findOrFail($this->selectedShopId);
-        $this->staffMembers = $shop->staff()->with('role')->get();
-    }
-
-    /**
-     * Load available users that can be assigned as staff
-     */
-    public function loadAvailableUsers()
-    {
-        $currentUser = Auth::user();
-
-        // Get appropriate users based on role
-        if ($currentUser->isSuperadmin() || $currentUser->isAdmin()) {
-            // Admins can assign anyone
-            $this->users = User::with('role')->get();
-        } else {
-            // Regular users (shop owners) can only assign staff role users
-            $staffRoleId = \App\Models\Role::where('name', 'staff')->value('id');
-            $this->users = User::where('role_id', $staffRoleId)->get();
-        }
-    }
-
-    /**
-     * Assign a staff member to the shop
-     */
-    public function assignStaff()
-    {
-        $this->validate([
-            'selectedUserId' => 'required|exists:users,id',
-            'selectedRole' => 'required|in:manager,staff',
-        ]);
-
-        $shop = Shop::findOrFail($this->selectedShopId);
-
-        // Check authorization
-        $currentUser = Auth::user();
-        if (!$currentUser->isAdmin() && !$currentUser->isSuperadmin() && $shop->owner_id != $currentUser->id) {
-            $this->addError('selectedUserId', 'You do not have permission to assign staff to this shop.');
-            return;
-        }
-
-        // Check if user is already assigned to the shop
-        $existing = $shop->staff()->where('user_id', $this->selectedUserId)->exists();
-
-        if ($existing) {
-            // Update their role instead
-            $shop->staff()->updateExistingPivot($this->selectedUserId, [
-                'role' => $this->selectedRole
-            ]);
-            session()->flash('message', 'Staff member role updated successfully.');
-        } else {
-            // Attach the user as new staff
-            $shop->staff()->attach($this->selectedUserId, [
-                'role' => $this->selectedRole
-            ]);
-            session()->flash('message', 'Staff member assigned to shop successfully.');
-        }
-
-        // Reset fields and refresh staff list
-        $this->reset(['selectedUserId', 'selectedRole']);
-        $this->loadStaffMembers();
-    }
-
-    /**
-     * Confirm removing staff member from shop
-     */
-    public function confirmRemoveStaff($userId)
-    {
-        $this->staffToRemove = $userId;
-    }
-
-    /**
-     * Remove a staff member from the shop
-     */
-    public function removeStaff()
-    {
-        if (!$this->selectedShopId || !$this->staffToRemove) {
-            return;
-        }
-
-        $shop = Shop::findOrFail($this->selectedShopId);
-
-        // Check authorization
-        $currentUser = Auth::user();
-        if (!$currentUser->isAdmin() && !$currentUser->isSuperadmin() && $shop->owner_id != $currentUser->id) {
-            $this->addError('staffToRemove', 'You do not have permission to remove staff from this shop.');
-            return;
-        }
-
-        // Detach the staff member
-        $shop->staff()->detach($this->staffToRemove);
-
-        $this->staffToRemove = null;
-        session()->flash('message', 'Staff member removed successfully.');
-
-        // Refresh staff list
-        $this->loadStaffMembers();
     }
     
     /**

@@ -576,13 +576,7 @@
                     </div>
                 @elseif($shopDetailView === 'manager')
                     <div>
-                        @if($showShopManager)
-                            <livewire:shop.shop-manager :key="'shop-manager-' . $selectedShopId" :shopId="$selectedShopId" />
-                        @else
-                            <div class="text-center py-10">
-                                <p class="text-gray-500">Loading shop manager...</p>
-                            </div>
-                        @endif
+                        <livewire:shop.manager.shop-manager-dashboard :key="'shop-manager-dashboard-' . $selectedShopId" :shopId="$selectedShopId" />
                     </div>
                 @endif
             @else
