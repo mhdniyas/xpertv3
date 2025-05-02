@@ -423,19 +423,11 @@
             document.getElementById('productForm').reset();
             document.getElementById('image-preview').innerHTML = '';
 
-            // Wait for Alpine.js to be fully initialized
+            // Make sure Alpine is loaded before trying to use it
             if (typeof Alpine !== 'undefined') {
-                // Access the Alpine component using Alpine.js global store or find the component
-                setTimeout(() => {
-                    const productModalElement = document.querySelector('#productModal');
-                    if (productModalElement && productModalElement.__x) {
-                        productModalElement.__x.data.action = 'create';
-                        productModalElement.__x.data.productId = null;
-                        productModalElement.__x.data.open = true;
-                    } else {
-                        console.error('Alpine.js component not found on #productModal');
-                    }
-                }, 50);
+                Alpine.$data(document.getElementById('productModal')).open = true;
+                Alpine.$data(document.getElementById('productModal')).action = 'create';
+                Alpine.$data(document.getElementById('productModal')).productId = null;
             } else {
                 console.error('Alpine.js is not defined');
             }
@@ -483,19 +475,12 @@
             // Clear image preview
             document.getElementById('image-preview').innerHTML = '';
 
-            // Wait for Alpine.js to be fully initialized
+            // Access the Alpine component directly using Alpine.$data
             if (typeof Alpine !== 'undefined') {
-                // Access the Alpine component using Alpine.js global store or find the component
-                setTimeout(() => {
-                    const productModalElement = document.querySelector('#productModal');
-                    if (productModalElement && productModalElement.__x) {
-                        productModalElement.__x.data.action = 'edit';
-                        productModalElement.__x.data.productId = productId;
-                        productModalElement.__x.data.open = true;
-                    } else {
-                        console.error('Alpine.js component not found on #productModal');
-                    }
-                }, 50);
+                const modalData = Alpine.$data(document.getElementById('productModal'));
+                modalData.action = 'edit';
+                modalData.productId = productId;
+                modalData.open = true;
             } else {
                 console.error('Alpine.js is not defined');
             }
@@ -537,7 +522,7 @@
                                 removeButton.className = 'absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 focus:outline-none';
                                 removeButton.innerHTML = `
                                     <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 111.414 1.414L11.414 10l4.293 4.293a1 1 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                                     </svg>
                                 `;
                                 removeButton.addEventListener('click', function() {
