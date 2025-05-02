@@ -88,26 +88,26 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/shop/{shop}/products', ShopProductManager::class)
         ->name('shop.products')
         ->middleware('can:manageProducts,shop');
-    
+
     // Rental Management Routes
     Route::prefix('rentals')->name('shops.rentals')->group(function () {
         Route::get('/', [RentalController::class, 'index']);
-        Route::get('/{shopId}/dashboard', [RentalController::class, 'dashboard'])->name('.dashboard');
-        
-        // Rental Products Management - Using controller instead of missing Livewire component
-        Route::get('/{shopId}/products', [RentalController::class, 'products'])
+        Route::get('/{shop}/dashboard', [RentalController::class, 'dashboard'])->name('.dashboard');
+
+        // Rental Products Management
+        Route::get('/{shop}/products', [RentalController::class, 'products'])
             ->name('.products')
-            ->middleware('can:manageProducts,App\Models\Shop,shopId');
-            
-        // Rental Bookings Management - Also using controller instead of missing Livewire component
-        Route::get('/{shopId}/bookings', [RentalController::class, 'bookings'])
+            ->middleware('can:manageProducts,shop');
+
+        // Rental Bookings Management
+        Route::get('/{shop}/bookings', [RentalController::class, 'bookings'])
             ->name('.bookings')
-            ->middleware('can:manageProducts,App\Models\Shop,shopId');
-            
+            ->middleware('can:manageProducts,shop');
+
         // Customer Management
-        Route::get('/{shopId}/customers', [RentalController::class, 'customers'])
+        Route::get('/{shop}/customers', [RentalController::class, 'customers'])
             ->name('.customers')
-            ->middleware('can:manageProducts,App\Models\Shop,shopId');
+            ->middleware('can:manageProducts,shop');
     });
 });
 

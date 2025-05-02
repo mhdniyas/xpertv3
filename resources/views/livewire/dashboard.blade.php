@@ -270,6 +270,55 @@
                                 </dd>
                             </div>
                             @endif
+
+                            <!-- NEW: Rental Products Card -->
+                            @if(isset($userRentalProducts) && $userRentalProducts > 0)
+                            <div class="relative px-4 pt-5 pb-12 overflow-hidden bg-white rounded-lg shadow sm:px-6 sm:pt-6 ring-2 ring-blue-100">
+                                <dt>
+                                    <div class="absolute p-3 bg-blue-600 rounded-md">
+                                        <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
+                                        </svg>
+                                    </div>
+                                    <p class="ml-16 text-sm font-medium text-gray-500 truncate">Rental Equipment</p>
+                                </dt>
+                                <dd class="flex items-baseline pb-6 ml-16 sm:pb-7">
+                                    <p class="text-2xl font-semibold text-gray-900">{{ number_format($userRentalProducts, 0) }}</p>
+                                    <div class="absolute inset-x-0 bottom-0 px-4 py-4 bg-gray-50 sm:px-6">
+                                        <div class="text-sm">
+                                            <button wire:click="setActiveTab('rentals')" class="font-medium text-blue-600 hover:text-blue-500">Manage equipment<span class="sr-only"> Rental equipment</span></button>
+                                        </div>
+                                    </div>
+                                </dd>
+                            </div>
+                            @endif
+
+                            <!-- NEW: Active Rentals Card -->
+                            @if(isset($userRentalBookings) && $userRentalBookings > 0)
+                            <div class="relative px-4 pt-5 pb-12 overflow-hidden bg-white rounded-lg shadow sm:px-6 sm:pt-6 ring-2 ring-blue-100">
+                                <dt>
+                                    <div class="absolute p-3 bg-blue-600 rounded-md">
+                                        <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
+                                    <p class="ml-16 text-sm font-medium text-gray-500 truncate">Active Rentals</p>
+                                </dt>
+                                <dd class="flex items-baseline pb-6 ml-16 sm:pb-7">
+                                    <p class="text-2xl font-semibold text-gray-900">{{ number_format($userActiveRentals, 0) }}</p>
+                                    <p class="flex items-baseline ml-2 text-sm font-semibold text-blue-600">
+                                        <span class="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+                                            Active
+                                        </span>
+                                    </p>
+                                    <div class="absolute inset-x-0 bottom-0 px-4 py-4 bg-gray-50 sm:px-6">
+                                        <div class="text-sm">
+                                            <button wire:click="setActiveTab('rentals')" class="font-medium text-blue-600 hover:text-blue-500">View rental bookings<span class="sr-only"> Active rentals</span></button>
+                                        </div>
+                                    </div>
+                                </dd>
+                            </div>
+                            @endif
                         </div>
 
                         @if($currentUser->isAdmin() || $currentUser->isSuperadmin())
@@ -753,6 +802,312 @@
                 @if($activeTab === 'shop_details')
                     <div>
                         <livewire:shop.shop-details />
+                    </div>
+                @endif
+
+                <!-- NEW: Rental Management Tab Content -->
+                @if($activeTab === 'rentals')
+                    <div>
+                        <div class="mb-6 space-y-4 sm:p-2">
+                            <div class="flex items-center justify-between">
+                                <h1 class="text-2xl font-bold text-gray-900">Rental Management</h1>
+                                <button class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    </svg>
+                                    Add New Rental Product
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Rental Management Tabs -->
+                        <div x-data="{ activeTab: 'products' }" class="bg-white rounded-lg shadow">
+                            <div class="border-b border-gray-200">
+                                <nav class="flex -mb-px space-x-8" aria-label="Tabs">
+                                    <button
+                                        @click="activeTab = 'products'"
+                                        :class="{ 'border-blue-500 text-blue-600': activeTab === 'products', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'products' }"
+                                        class="py-4 px-1 border-b-2 font-medium text-sm"
+                                    >
+                                        Rental Products
+                                    </button>
+                                    <button
+                                        @click="activeTab = 'bookings'"
+                                        :class="{ 'border-blue-500 text-blue-600': activeTab === 'bookings', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'bookings' }"
+                                        class="py-4 px-1 border-b-2 font-medium text-sm"
+                                    >
+                                        Bookings
+                                    </button>
+                                    <button
+                                        @click="activeTab = 'active'"
+                                        :class="{ 'border-blue-500 text-blue-600': activeTab === 'active', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'active' }"
+                                        class="py-4 px-1 border-b-2 font-medium text-sm"
+                                    >
+                                        Active Rentals
+                                    </button>
+                                    <button
+                                        @click="activeTab = 'customers'"
+                                        :class="{ 'border-blue-500 text-blue-600': activeTab === 'customers', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'customers' }"
+                                        class="py-4 px-1 border-b-2 font-medium text-sm"
+                                    >
+                                        Customers
+                                    </button>
+                                    <button
+                                        @click="activeTab = 'reports'"
+                                        :class="{ 'border-blue-500 text-blue-600': activeTab === 'reports', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'reports' }"
+                                        class="py-4 px-1 border-b-2 font-medium text-sm"
+                                    >
+                                        Reports
+                                    </button>
+                                </nav>
+                            </div>
+
+                            <!-- Rental Products Tab -->
+                            <div x-show="activeTab === 'products'" class="p-6">
+                                <!-- Filter and Search Controls -->
+                                <div class="flex items-center justify-between mb-6">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="relative">
+                                            <select class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                                <option value="">All Categories</option>
+                                                <option value="tools">Tools</option>
+                                                <option value="construction">Construction Equipment</option>
+                                                <option value="party">Party & Event</option>
+                                                <option value="outdoor">Outdoor</option>
+                                            </select>
+                                        </div>
+                                        <div class="relative">
+                                            <select class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                                <option value="all">All Status</option>
+                                                <option value="available">Available</option>
+                                                <option value="rented">Rented</option>
+                                                <option value="maintenance">Maintenance</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                            <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                            </svg>
+                                        </div>
+                                        <input type="text" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Search rental products">
+                                    </div>
+                                </div>
+
+                                <!-- Rental Products Table -->
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Available Units</th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200">
+                                            <!-- Sample Rental Product 1 -->
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="flex items-center">
+                                                        <div class="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-md flex items-center justify-center">
+                                                            <svg class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                                                            </svg>
+                                                        </div>
+                                                        <div class="ml-4">
+                                                            <div class="text-sm font-medium text-gray-900">Power Drill XL-500</div>
+                                                            <div class="text-sm text-gray-500">SKU: DRILL-XL500</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                        Power Tools
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                        Available
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="text-sm text-gray-900">$25.00 / day</div>
+                                                    <div class="text-sm text-gray-500">$120.00 / week</div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    5 units
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                    <div class="flex space-x-2">
+                                                        <button class="text-blue-600 hover:text-blue-900">Edit</button>
+                                                        <button class="text-green-600 hover:text-green-900">Create Booking</button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+
+                                            <!-- Sample Rental Product 2 -->
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="flex items-center">
+                                                        <div class="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-md flex items-center justify-center">
+                                                            <svg class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                            </svg>
+                                                        </div>
+                                                        <div class="ml-4">
+                                                            <div class="text-sm font-medium text-gray-900">Cement Mixer Pro-300</div>
+                                                            <div class="text-sm text-gray-500">SKU: MIXER-PRO300</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                        Construction
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                        Rented
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="text-sm text-gray-900">$45.00 / day</div>
+                                                    <div class="text-sm text-gray-500">$180.00 / week</div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    2 units (0 available)
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                    <div class="flex space-x-2">
+                                                        <button class="text-blue-600 hover:text-blue-900">Edit</button>
+                                                        <button class="text-gray-400 cursor-not-allowed">Create Booking</button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+
+                                            <!-- Sample Rental Product 3 -->
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="flex items-center">
+                                                        <div class="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-md flex items-center justify-center">
+                                                            <svg class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                            </svg>
+                                                        </div>
+                                                        <div class="ml-4">
+                                                            <div class="text-sm font-medium text-gray-900">Party Tent 20x30</div>
+                                                            <div class="text-sm text-gray-500">SKU: TENT-2030</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                                        Party & Event
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                                        Maintenance
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="text-sm text-gray-900">$150.00 / day</div>
+                                                    <div class="text-sm text-gray-500">$500.00 / week</div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    3 units (1 available)
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                    <div class="flex space-x-2">
+                                                        <button class="text-blue-600 hover:text-blue-900">Edit</button>
+                                                        <button class="text-green-600 hover:text-green-900">Create Booking</button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Pagination -->
+                                <div class="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6 mt-4">
+                                    <div class="flex justify-between flex-1 sm:hidden">
+                                        <a href="#" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                                            Previous
+                                        </a>
+                                        <a href="#" class="relative inline-flex items-center px-4 py-2 ml-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                                            Next
+                                        </a>
+                                    </div>
+                                    <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                                        <div>
+                                            <p class="text-sm text-gray-700">
+                                                Showing <span class="font-medium">1</span> to <span class="font-medium">3</span> of <span class="font-medium">12</span> results
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <nav class="inline-flex -space-x-px rounded-md shadow-sm isolate" aria-label="Pagination">
+                                                <a href="#" class="relative inline-flex items-center px-2 py-2 text-gray-400 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                                    <span class="sr-only">Previous</span>
+                                                    <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                        <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </a>
+                                                <a href="#" aria-current="page" class="relative z-10 inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-blue-600 border border-blue-600 focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">1</a>
+                                                <a href="#" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 bg-white border border-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">2</a>
+                                                <a href="#" class="relative hidden items-center px-4 py-2 text-sm font-semibold text-gray-900 bg-white border border-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 md:inline-flex">3</a>
+                                                <a href="#" class="relative inline-flex items-center px-2 py-2 text-gray-400 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                                    <span class="sr-only">Next</span>
+                                                    <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                        <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </a>
+                                            </nav>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bookings Tab -->
+                            <div x-show="activeTab === 'bookings'" class="p-6">
+                                <div class="text-center py-12">
+                                    <h3 class="text-lg font-medium text-gray-900">Rental Bookings Management</h3>
+                                    <p class="mt-2 text-sm text-gray-500">View and manage all rental bookings here.</p>
+                                    <p class="mt-2 text-sm text-gray-500">This tab will be implemented with rental booking functionality.</p>
+                                </div>
+                            </div>
+
+                            <!-- Active Rentals Tab -->
+                            <div x-show="activeTab === 'active'" class="p-6">
+                                <div class="text-center py-12">
+                                    <h3 class="text-lg font-medium text-gray-900">Active Rentals Management</h3>
+                                    <p class="mt-2 text-sm text-gray-500">View and manage currently active rentals here.</p>
+                                    <p class="mt-2 text-sm text-gray-500">This tab will be implemented with active rental tracking functionality.</p>
+                                </div>
+                            </div>
+
+                            <!-- Customers Tab -->
+                            <div x-show="activeTab === 'customers'" class="p-6">
+                                <div class="text-center py-12">
+                                    <h3 class="text-lg font-medium text-gray-900">Rental Customers Management</h3>
+                                    <p class="mt-2 text-sm text-gray-500">View and manage rental customer profiles here.</p>
+                                    <p class="mt-2 text-sm text-gray-500">This tab will be implemented with customer management functionality.</p>
+                                </div>
+                            </div>
+
+                            <!-- Reports Tab -->
+                            <div x-show="activeTab === 'reports'" class="p-6">
+                                <div class="text-center py-12">
+                                    <h3 class="text-lg font-medium text-gray-900">Rental Reports</h3>
+                                    <p class="mt-2 text-sm text-gray-500">View rental performance reports here.</p>
+                                    <p class="mt-2 text-sm text-gray-500">This tab will be implemented with reporting and analytics functionality.</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 @endif
             </div>

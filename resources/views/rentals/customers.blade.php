@@ -98,11 +98,11 @@
                                                 {{ $customer->priority_points }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
-                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                    {{ $customer->customer_tier === 'platinum' ? 'bg-purple-100 text-purple-800' : 
-                                                       ($customer->customer_tier === 'gold' ? 'bg-yellow-100 text-yellow-800' : 
-                                                        ($customer->customer_tier === 'silver' ? 'bg-gray-100 text-gray-800' : 
-                                                         ($customer->customer_tier === 'bronze' ? 'bg-yellow-50 text-yellow-700' : 
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                                    {{ $customer->customer_tier === 'platinum' ? 'bg-purple-100 text-purple-800' :
+                                                       ($customer->customer_tier === 'gold' ? 'bg-yellow-100 text-yellow-800' :
+                                                        ($customer->customer_tier === 'silver' ? 'bg-gray-100 text-gray-800' :
+                                                         ($customer->customer_tier === 'bronze' ? 'bg-yellow-50 text-yellow-700' :
                                                           'bg-blue-50 text-blue-800'))) }}">
                                                     {{ ucfirst($customer->customer_tier) }}
                                                 </span>
@@ -120,7 +120,7 @@
                                 </tbody>
                             </table>
                         </div>
-                        
+
                         <!-- Pagination -->
                         <div class="mt-4">
                             {{ $customers->links() }}
@@ -156,17 +156,17 @@
             // Implementation would go here - likely using Alpine.js or a similar approach
             alert('Add customer modal would open here');
         }
-        
+
         function viewCustomerDetails(customerId) {
             // Implementation would go here
             alert('View customer profile for: ' + customerId);
         }
-        
+
         function createBookingForCustomer(customerId) {
             // Implementation would go here
             alert('Create new booking for customer: ' + customerId);
         }
-        
+
         function viewRentalHistory(customerId) {
             // Implementation would go here
             alert('View rental history for customer: ' + customerId);

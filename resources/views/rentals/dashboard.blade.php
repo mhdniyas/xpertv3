@@ -79,7 +79,7 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
                     <h3 class="text-lg font-semibold mb-4">Quick Actions</h3>
-                    
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <a href="{{ route('shops.rentals.products', $shop->id) }}" class="border rounded-lg p-4 hover:bg-gray-50 transition flex items-center">
                             <div class="mr-4 bg-blue-100 p-3 rounded-full">
@@ -92,7 +92,7 @@
                                 <p class="text-sm text-gray-600">Add equipment or items available for rent</p>
                             </div>
                         </a>
-                        
+
                         <a href="{{ route('shops.rentals.bookings', $shop->id) }}" class="border rounded-lg p-4 hover:bg-gray-50 transition flex items-center">
                             <div class="mr-4 bg-green-100 p-3 rounded-full">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">

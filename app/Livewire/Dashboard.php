@@ -90,7 +90,7 @@ class Dashboard extends Component
             $this->totalProducts = Product::count();
             $this->pendingShops = Shop::where('status', 'pending')->count();
             $this->productSuggestions = 0; // Replace with actual implementation when available
-            
+
             // Load rental statistics for admins
             $this->rentalProducts = \App\Models\RentalProduct::count();
             $this->rentalBookings = \App\Models\RentalBooking::count();
@@ -374,7 +374,7 @@ class Dashboard extends Component
 
         // Build navigation tabs based on user role - prioritizing Shop Details
         $tabs = [];
-        
+
         // Add shop details tab at the top for shop owners and admins
         if ($currentUser->isManager() || $currentUser->isAdmin() || $currentUser->isSuperadmin()) {
             $tabs['shop_details'] = [
@@ -382,7 +382,7 @@ class Dashboard extends Component
                 'icon' => 'store-alt'
             ];
         }
-        
+
         // Now add overview tab
         $tabs['overview'] = [
             'name' => 'Overview',
@@ -484,7 +484,15 @@ class Dashboard extends Component
             'topSellingProducts' => $topSellingProducts,
             'recentShopActivities' => $recentShopActivities,
             'shopSales' => $shopSales,
-            'shopVisits' => $shopVisits
+            'shopVisits' => $shopVisits,
+            // Rental metrics
+            'rentalProducts' => $this->rentalProducts ?? 0,
+            'rentalBookings' => $this->rentalBookings ?? 0,
+            'activeRentals' => $this->activeRentals ?? 0,
+            'rentalCustomers' => $this->rentalCustomers ?? 0,
+            'userRentalProducts' => $this->userRentalProducts ?? 0,
+            'userRentalBookings' => $this->userRentalBookings ?? 0,
+            'userActiveRentals' => $this->userActiveRentals ?? 0
         ]);
     }
 

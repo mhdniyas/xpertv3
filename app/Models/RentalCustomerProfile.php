@@ -98,7 +98,7 @@ class RentalCustomerProfile extends Model
     public function recordRental($booking)
     {
         $history = $this->rental_history ?? [];
-        
+
         $history[] = [
             'booking_id' => $booking->id,
             'booking_number' => $booking->booking_number,
@@ -106,12 +106,12 @@ class RentalCustomerProfile extends Model
             'total_amount' => $booking->total_amount,
             'status' => $booking->booking_status,
         ];
-        
+
         $this->rental_history = $history;
         $this->last_rental_date = now();
         $this->total_rentals += 1;
         $this->save();
-        
+
         return $this;
     }
 
@@ -121,11 +121,11 @@ class RentalCustomerProfile extends Model
     public function addPoints($points, $amount = null)
     {
         $this->priority_points += $points;
-        
+
         if ($amount) {
             $this->total_spent += $amount;
         }
-        
+
         // Update tier based on total points
         if ($this->priority_points >= 500) {
             $this->customer_tier = 'platinum';
@@ -136,9 +136,9 @@ class RentalCustomerProfile extends Model
         } elseif ($this->priority_points >= 50) {
             $this->customer_tier = 'bronze';
         }
-        
+
         $this->save();
-        
+
         return $this;
     }
 
