@@ -90,6 +90,12 @@ class Dashboard extends Component
             $this->totalProducts = Product::count();
             $this->pendingShops = Shop::where('status', 'pending')->count();
             $this->productSuggestions = 0; // Replace with actual implementation when available
+            
+            // Load rental statistics for admins
+            $this->rentalProducts = \App\Models\RentalProduct::count();
+            $this->rentalBookings = \App\Models\RentalBooking::count();
+            $this->activeRentals = \App\Models\RentalBooking::whereIn('booking_status', ['confirmed', 'picked-up'])->count();
+            $this->rentalCustomers = \App\Models\RentalCustomerProfile::count();
         }
 
         // Load user shop metrics
@@ -110,6 +116,16 @@ class Dashboard extends Component
 
         // Sample visits data (replace with actual implementation when available)
         $this->shopVisits = 1240;
+
+        // Load rental data for user's shops
+        $userShopIds = Shop::where('owner_id', $this->currentUser->id)->pluck('id')->toArray();
+        if (!empty($userShopIds)) {
+            $this->userRentalProducts = \App\Models\RentalProduct::whereIn('shop_id', $userShopIds)->count();
+            $this->userRentalBookings = \App\Models\RentalBooking::whereIn('shop_id', $userShopIds)->count();
+            $this->userActiveRentals = \App\Models\RentalBooking::whereIn('shop_id', $userShopIds)
+                ->whereIn('booking_status', ['confirmed', 'picked-up'])
+                ->count();
+        }
 
         // Recent shop activities for admins
         if ($this->currentUser->isAdmin() || $this->currentUser->isSuperadmin()) {
@@ -372,6 +388,14 @@ class Dashboard extends Component
             'name' => 'Overview',
             'icon' => 'home'
         ];
+
+        // Add rental management tab for all users with shops
+        if ($currentUser->isManager() || $currentUser->isAdmin() || $currentUser->isSuperadmin()) {
+            $tabs['rentals'] = [
+                'name' => 'Rental Management',
+                'icon' => 'calendar-alt'
+            ];
+        }
 
         // Add user management for admins and superadmins
         if ($currentUser->isAdmin() || $currentUser->isSuperadmin()) {

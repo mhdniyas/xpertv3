@@ -6,7 +6,10 @@ use App\Livewire\Shop\ShopMarketplace;
 use App\Livewire\Shop\ShopCategoryManager;
 use App\Livewire\Shop\ShopProductManager;
 use App\Livewire\Shop\ShopManager;
+use App\Livewire\Shop\RentalBookingManager;
+use App\Livewire\Shop\RentalProductManager;
 use App\Http\Controllers\ShopController;
+use App\Http\Controllers\RentalController;
 use App\Livewire\Marketplace\MarketplaceLanding;
 // Removed AdminDashboard import as it doesn't exist
 
@@ -56,7 +59,7 @@ Route::middleware(['auth'])->group(function () {
 // Shop Marketplace Routes
 Route::get('/marketplace', [ShopController::class, 'index'])->name('marketplace');
 Route::get('/shop/{slug}', [ShopController::class, 'show'])->name('shop.show');
-Route::get('/shop/{shopSlug}/product/{productSlug}', [ShopController::class, 'showProduct'])->name('shop.product.show');
+Route::get('/shop/{shopSlug}/product/{productSlug?}', [ShopController::class, 'showProduct'])->name('shop.product.show');
 
 // New Marketplace Landing Page
 Route::get('/marketplace/landing', MarketplaceLanding::class)->name('marketplace.landing');
@@ -85,6 +88,27 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/shop/{shop}/products', ShopProductManager::class)
         ->name('shop.products')
         ->middleware('can:manageProducts,shop');
+    
+    // Rental Management Routes
+    Route::prefix('rentals')->name('shops.rentals')->group(function () {
+        Route::get('/', [RentalController::class, 'index']);
+        Route::get('/{shopId}/dashboard', [RentalController::class, 'dashboard'])->name('.dashboard');
+        
+        // Rental Products Management - Using controller instead of missing Livewire component
+        Route::get('/{shopId}/products', [RentalController::class, 'products'])
+            ->name('.products')
+            ->middleware('can:manageProducts,App\Models\Shop,shopId');
+            
+        // Rental Bookings Management - Also using controller instead of missing Livewire component
+        Route::get('/{shopId}/bookings', [RentalController::class, 'bookings'])
+            ->name('.bookings')
+            ->middleware('can:manageProducts,App\Models\Shop,shopId');
+            
+        // Customer Management
+        Route::get('/{shopId}/customers', [RentalController::class, 'customers'])
+            ->name('.customers')
+            ->middleware('can:manageProducts,App\Models\Shop,shopId');
+    });
 });
 
 require __DIR__.'/auth.php';
